@@ -5,7 +5,7 @@
 public static class SessionManager {
 
     // In seconds
-    private const int Timeout = 10;
+    private const int Timeout = 30;
     private static Dictionary<Guid,DateTime> Session = new() {};
 
     public static void AddSession(Guid guid) {
