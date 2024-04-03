@@ -4,7 +4,9 @@ using System.Text;
 
 public class HashCalculator
 {
-    public static readonly string ServerSecurityHash = Program.Configuration.GetValue<string>("ServerSecret");
+    // Used to decrypt/encrypt passwords with secret + salt
+    public static readonly string ServerSecurityHash = Program.Configuration.GetValue<string>("ServerSecret")!;
+    
     public static string ComputeSHA256Hash(string input)
     {
         using (SHA256 sha256 = SHA256.Create())

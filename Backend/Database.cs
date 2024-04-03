@@ -56,12 +56,12 @@ public static partial class Database {
             return null;
         }
     }
-    public static async Task<int> AddUser(User user) {
+    public static async Task<int> AddUserAsync(User user) {
         // Return ID
         return 0;
         throw new NotImplementedException();
     }
-    public static Task<bool> RemoveUser(User user) {
+    public static Task<bool> RemoveUserAsync(User user) {
         throw new NotImplementedException();
     }
 
@@ -79,8 +79,46 @@ public static partial class Database {
         if (rowsAffected != 1) throw new Exception($"Unable to update user! {user.Id}");
     }
 
-    public static Task<Task> GetTask() {
-        throw new NotImplementedException();
+    public static async Task<List<TodoTask>> GetTasksAsync(int userId) {
+        string query = "SELECT * FROM tasks WHERE id=@id";
+        using MySqlCommand cmd = new MySqlCommand(query, Connection);
+
+        cmd.Parameters.AddWithValue("@id", userId);
+
+        // Read data from Database
+        List<TodoTask> tasks = [];
+        var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync()) {
+            TodoTask task = new() {
+                Id = reader.GetInt32("id"),
+                OwnerId = reader.GetInt32("user"),
+                Name = reader.GetString("name"),
+                //task.Status = reader.GetInt16("password_hash");
+                StartDate = reader.GetDateTime("start"),
+                EndDate = reader.GetDateTime("end")
+            };
+
+            tasks.Add(task);
+        }
+
+        return tasks;
+    }
+
+    // TODO
+    public static async Task<TodoTask> CreateTaskAsync(int userId) {
+
+        TodoTask task = new() {
+
+        };
+        string query = "UPDATE tasks SET FROM tasks WHERE id=@id";
+        using MySqlCommand cmd = new MySqlCommand(query, Connection);
+
+        cmd.Parameters.AddWithValue("@id", userId);
+
+        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+        if (rowsAffected != 1) throw new Exception($"Unable to add task for user! {userId}");
+
+        return task;
     }
 }
 

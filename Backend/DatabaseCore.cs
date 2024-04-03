@@ -5,45 +5,47 @@ using MySqlConnector;
 
 
 public static partial class Database {
-    
     private static MySqlConnection? Connection;
 
     public static async void ConnectToDatabase() {
         IConfigurationRoot configuration = Program.Configuration;
 
-        // Retrieve configuration values
-        string server = configuration.GetValue<string>("Database:Server");
+        // Retrieve configuration values for MySql connection
+        string? server = configuration.GetValue<string>("Database:Server");
         uint port = configuration.GetValue<uint>("Database:Port");
-        string database = configuration.GetValue<string>("Database:Database");
-        string userId = configuration.GetValue<string>("Database:Username");
-        string password = configuration.GetValue<string>("Database:Password");
+        string? database = configuration.GetValue<string>("Database:Database");
+        string? userId = configuration.GetValue<string>("Database:Username");
+        string? password = configuration.GetValue<string>("Database:Password");
         bool autocreate = configuration.GetValue<bool>("Database:AutoCreateTablesAndDatabase");
 
-
-
+        // Settings to connect to the database
         MySqlConnectionStringBuilder builder = new() {
             Server = server,
             Port = port,
-            Database = database,
             UserID = userId,
             Password = password
         };
 
+        // Connect to database and open it. For now lets keep the socket always open
         Connection = new MySqlConnection(builder.ConnectionString);
         await Connection.OpenAsync();
 
+        // Create actual database if not found
         if (autocreate) {
             using MySqlCommand command = new ($"CREATE DATABASE IF NOT EXISTS {database}", Connection);
             if (await command.ExecuteNonQueryAsync() != 0)
                 Console.WriteLine($"Database not found, and new was created! ({database})");
         }
 
-        
-        await Connection.ChangeDatabaseAsync(database);
+        // Set active database. Will throw error if database not found!
+        await Connection.ChangeDatabaseAsync(database!);
 
+        // Create ncessary tables automatically if not created
         if (autocreate) CreateTables();
     }
 
+
+    // Close database and disposes socket
     public static async void CloseDatabase() {
         if (Connection is null) return;
         
@@ -53,6 +55,7 @@ public static partial class Database {
         Connection = null;
     }
 
+    // Check if database is open and simple qyery can be made
     public static bool IsConnectedToDatabase() {
         if (Connection is null) return false;
         if (Connection.State != ConnectionState.Open) return false;
@@ -67,7 +70,7 @@ public static partial class Database {
         }
     }
 
-
+    // TODO tasks and
     private static void CreateTables() {
         string tableName = "tasks";
         using MySqlCommand weatherdata = new ($@"CREATE TABLE IF NOT EXISTS {tableName} (
@@ -84,9 +87,10 @@ public static partial class Database {
         tableName = "users";
         using MySqlCommand users = new ($@"CREATE TABLE IF NOT EXISTS {tableName} (
             Id INT AUTO_INCREMENT PRIMARY KEY,
-            username TEXT,
-            expiration TIMESTAMP,
-            token TEXT
+            username VARCHAR(64) NOT NULL,
+            password_hash TEXT NOT NULL,
+            salt INT NOT NULL,
+            lastLoginTime TIMESTAMP NULL DEFAULT NULL
         )", Connection);
         users.ExecuteNonQuery();
 
@@ -107,7 +111,7 @@ public static partial class Database {
 
 
 
-public class Task {
+public class TodoTask {
     public enum TaskStatus {
         New,
         InProgress,
@@ -116,6 +120,7 @@ public class Task {
     }
 
     public int Id { get; set; }
+    public int OwnerId { get; set; }
     public string? Name { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; }
@@ -129,7 +134,7 @@ public class User {
     public DateTime? LastLogin { get; set; }
     public string? PasswordHash { get; set; }
     public Guid? SessionToken { get; set; }
-    public string Salt { get; set; }
+    public string? Salt { get; set; }
 
     public User() {} 
     public User(string username, string passwordHash) {
