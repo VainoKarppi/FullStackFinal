@@ -9,7 +9,7 @@ public static partial class Database {
     private static MySqlConnection? Connection;
 
     public static async void ConnectToDatabase() {
-        IConfigurationRoot configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+        IConfigurationRoot configuration = Program.Configuration;
 
         // Retrieve configuration values
         string server = configuration.GetValue<string>("Database:Server");
@@ -124,9 +124,21 @@ public class Task {
 }
 
 public class User {
-    public int Id { get; set; }
+    public int? Id { get; set; }
     public string? Username { get; set; }
-    public DateTime LastLogin { get; set; }
+    public DateTime? LastLogin { get; set; }
     public string? PasswordHash { get; set; }
-    public string? SessionToken { get; set; }
+    public Guid? SessionToken { get; set; }
+    public string Salt { get; set; }
+
+    public User() {} 
+    public User(string username, string passwordHash) {
+        Username = username;
+        PasswordHash = passwordHash;
+        LastLogin = DateTime.Now;
+
+        var sessionguid = Guid.NewGuid();
+        SessionManager.AddSession(sessionguid);
+        SessionToken = sessionguid;
+    }
 }
