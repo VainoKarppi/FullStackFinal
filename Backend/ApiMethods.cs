@@ -51,8 +51,7 @@ public static class ApiMethods {
             user.Id = id;
 
             // Check if Unauthorized. Username or password is incorrect
-            if (user is null)
-            {
+            if (user is null) {
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 return;
             }
@@ -69,7 +68,7 @@ public static class ApiMethods {
             user.PasswordHash = null; // Dont resend password hash back
 
             // Return User in response with Token as parameter
-            context.Response.StatusCode = StatusCodes.Status200OK;
+            context.Response.StatusCode = StatusCodes.Status201Created;
             await context.Response.WriteAsJsonAsync(JsonSerializer.Serialize(user));
 
             // Update LastLogin Data.
@@ -92,6 +91,7 @@ public static class ApiMethods {
         }
 
         List<TodoTask> tasks = await Database.GetTasksAsync(userId);
+        context.Response.StatusCode = StatusCodes.Status200OK;
         await context.Response.WriteAsJsonAsync(JsonSerializer.Serialize(tasks));
     }
 
@@ -100,6 +100,7 @@ public static class ApiMethods {
         var passwordHash = context.Request.Form["password"];
 
         TodoTask task = await Database.CreateTaskAsync(userId);
+        context.Response.StatusCode = StatusCodes.Status201Created;
         await context.Response.WriteAsJsonAsync(JsonSerializer.Serialize(task));
     }
 }
