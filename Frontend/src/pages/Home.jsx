@@ -3,15 +3,19 @@ import React, { useState } from 'react';
 import { Container, Form, Button } from 'react-bootstrap';
 
 const Home = () => {
-    const [email, setEmail] = useState('');
+    const [username, setUsername, password, setPassword] = useState('');
     const [showSuccess, setShowSuccess] = useState(false);
 
-    const handleSubscribe = (e) => {
-        e.preventDefault();
+    const handleRegister = (e) => {
+        e.preventDe
+        fault();
         // Handle subscription logic (e.g., send email to server)
         // For now, let's just show a success message.
+        // TODO call rest api register and wait for status 201
+        // Send password as SHA256
+        // TODO Forward to login page after 2 seconds
         setShowSuccess(true);
-      };
+    };
     return (
         <Container style={{ marginTop: '50px' }}>
             <div class="card">
@@ -28,21 +32,30 @@ const Home = () => {
 
             <br/>
 
-            <Form onSubmit={handleSubscribe}>
-                <Form.Group controlId="formBasicEmail">
-                    <Form.Label>Email address</Form.Label>
+            <Form onSubmit={handleRegister}>
+                <Form.Group controlId="formUsername">
+                    <Form.Label>Username</Form.Label>
                     <Form.Control
-                    type="email"
-                    placeholder="Enter email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text"
+                    placeholder="Enter username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    />
+                </Form.Group>
+                <Form.Group controlId="formPassword">
+                    <Form.Label>Password</Form.Label>
+                    <Form.Control
+                    type="password"
+                    placeholder="Enter password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     />
                     <Form.Text className="text-muted">
-                    We'll never share your email with anyone else.
+                    Passwords are hashed using SHA256
                     </Form.Text>
                 </Form.Group>
                 <Button variant="primary" type="submit">
-                    Subscribe
+                    Register
                 </Button>
 
                 <br/><br/>
@@ -50,7 +63,7 @@ const Home = () => {
                 {showSuccess && (
                     
                     <div className="alert alert-success">
-                        <strong>Success!</strong> Subscibed with email: {email}
+                        <strong>Success!</strong> Registerd with username: {username}
                     </div>
                 )}
             </Form>
