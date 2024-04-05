@@ -10,50 +10,69 @@ using System.Linq;
 using System.Text.Json;
 
 
+namespace Backend;
 
 internal class Program {
     public static IConfigurationRoot Configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
-    private static void Main(string[] args) {
-        var builder = WebApplication.CreateBuilder(args);
+    private static async Task Main(string[] args) {
+        try {
+            var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddAuthentication();
-        builder.Services.AddAuthorization();
+            /*
+            builder.Services.AddAuthentication();
+            builder.Services.AddAuthorization();
+            */
 
-        Database.ConnectToDatabase();
+            Console.Write("Connecting to Database...");
+            Database.ConnectToDatabase();
+            Console.WriteLine(" Connected!\n");
 
-        var app = builder.Build();
+            var app = builder.Build();
 
-        // Add Methods
-        app.MapPost("/task/create/{userId}", ApiMethods.CreateTask);
-        app.MapGet("/tasks/{userId}", ApiMethods.GetTasks);
-        app.MapPost("/register", ApiMethods.Register);
-        app.MapPost("/login", ApiMethods.Login);
-        app.MapGet("/", ApiMethods.Home);
+            // Add Methods
+            app.MapPost("/task/create/{userId}", ApiMethods.CreateTask);
+            app.MapGet("/tasks/{userId}", ApiMethods.GetTasks);
+            app.MapPost("/register", ApiMethods.Register);
+            app.MapPost("/login", ApiMethods.Login);
+            app.MapPost("/logout", ApiMethods.Logout);
+            app.MapGet("/", ApiMethods.Home);
 
-        // Endpoint to access protected resource using session token
-        app.MapGet("/protected", async (context) =>
-        {
-            // Check if session token is provided in request header
-            context.Request.Headers.TryGetValue("Authorization", out var sessionToken);
-            if (!string.IsNullOrEmpty(sessionToken) && SessionManager.IsTokenSessionValid(sessionToken!))
-            {
+            // Endpoint to access protected resource using session token
+            app.MapGet("/protected", async (context) => {
+
+                // Make sure user is still authenticated by timer
+                // Return the Http messages on its own
+                if (!await SessionManager.Authorized(context)) return;
+
                 // Authorized, return the protected resource
                 context.Response.StatusCode = StatusCodes.Status200OK;
                 await context.Response.WriteAsync("Welcome to the protected resource!");
-            }
-            else
-            {
-                // Unauthorized if session token is missing or invalid
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            }
-        });
+            });
 
+            // Run server on background so we can use CLI
+            _ = Task.Run(() => app.Run());
 
+            await Task.Delay(1000);
+            Console.WriteLine("STARTED API SERVER");
 
+            new Thread(() => {
+                Console.WriteLine("\n\n");
+                while (true) {
+                    string? input = Console.ReadLine()!.ToLower().Trim();;
+                    if (input == "exit") break;
+                    if (input == "addtesttoken") {
+                        Guid guid = Guid.NewGuid();
+                        SessionManager.AddSession(guid);
+                        Console.WriteLine($"Test Token is: {guid}");
+                    }
+                }
+            }).Start();
+           
 
-
-
-
-        app.Run();
+        } catch (Exception ex) {
+            Console.WriteLine(ex);
+            Console.WriteLine($"\n\n{ex.Message}\n");
+        }
+        
     }
 }

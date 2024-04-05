@@ -2,7 +2,7 @@
 using System.Data;
 using MySqlConnector;
 
-
+namespace Backend;
 
 public static partial class Database {
     private static MySqlConnection? Connection;
@@ -141,9 +141,6 @@ public class User {
         Username = username;
         PasswordHash = passwordHash;
         LastLogin = DateTime.Now;
-
-        var sessionguid = Guid.NewGuid();
-        SessionManager.AddSession(sessionguid);
-        SessionToken = sessionguid;
+        SessionToken = Guid.NewGuid();;
     }
 }
