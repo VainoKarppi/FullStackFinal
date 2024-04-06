@@ -27,7 +27,16 @@ internal class Program {
             Database.ConnectToDatabase();
             Console.WriteLine(" Connected!\n");
 
+            // Add CORS
+            builder.Services.AddCors();
+
             var app = builder.Build();
+
+            // Add CORS policies
+            app.UseCors(policy => policy
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader());
 
             // Add Methods
             app.MapPost("/tasks/create/{userId}", ApiMethods.CreateTask);

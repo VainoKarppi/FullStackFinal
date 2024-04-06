@@ -38,6 +38,8 @@ public static class ApiMethods {
         context.Response.StatusCode = StatusCodes.Status200OK;
         await context.Response.WriteAsJsonAsync(new {user.Id, user.Username, user.LastLogin, sessionToken});
 
+        Console.WriteLine($"User Logged in! {user.Id} ({user.Username})");
+
         // Update LastLogin Data. Fire and Forget
         user.LastLogin = DateTime.Now;
         await Database.UpdateUserAsync(user,true);
@@ -49,6 +51,7 @@ public static class ApiMethods {
         string bearerToken = SessionManager.GetTokenFromHeader(context.Request.Headers);
         SessionManager.RemoveSession(Guid.Parse(bearerToken));
 
+        Console.WriteLine($"User Logged out! {bearerToken}");
         // Let frontend handle the auto page forwarding
         context.Response.StatusCode = StatusCodes.Status204NoContent;
     }
@@ -75,6 +78,7 @@ public static class ApiMethods {
             // Return User in response with Token as parameter
             context.Response.StatusCode = StatusCodes.Status201Created;
             await context.Response.WriteAsJsonAsync(new {user.Id, user.Username, user.LastLogin, user.SessionToken});
+            Console.WriteLine($"Succesfully created account: {user.Id} ({user.Username})");
         } catch (Exception ex) {
             Console.WriteLine(ex);
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;

@@ -1,29 +1,51 @@
 
 import React, { useState } from 'react';
 import { Container, Form, Button } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import API_ROOT from '../config';
 
 const Home = () => {
-    const [username, setUsername, password, setPassword] = useState('');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
     const [showSuccess, setShowSuccess] = useState(false);
+    const navigate  = useNavigate();
 
     const handleRegister = (e) => {
-        e.preventDe
-        fault();
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('username', username);
+        formData.append('password', password);
+
+        fetch(`${API_ROOT}/register`, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            const sessionToken = data.sessionToken;
+            console.log('Session token:', sessionToken);
+            setShowSuccess(true);
+            setTimeout(() => {
+                navigate('/tasks'); // Redirect to /tasks after 2 seconds
+            }, 2000); // 2 seconds
+        })
+        .catch((error) => console.error('Error:', error));
+
         // Handle subscription logic (e.g., send email to server)
         // For now, let's just show a success message.
         // TODO call rest api register and wait for status 201
         // Send password as SHA256
         // TODO Forward to login page after 2 seconds
-        setShowSuccess(true);
     };
     return (
         <Container style={{ marginTop: '50px' }}>
-            <div class="card">
-                <div class="card-header">
+            <div className="card">
+                <div className="card-header">
                     Welcome
                 </div>
-                <div class="card-body">
-                    <blockquote class="blockquote mb-0">
+                <div className="card-body">
+                    <blockquote className="blockquote mb-0">
                     <h3>Home Page</h3>
                     <p>This is the home page</p>
                     </blockquote>
@@ -61,9 +83,10 @@ const Home = () => {
                 <br/><br/>
 
                 {showSuccess && (
-                    
                     <div className="alert alert-success">
                         <strong>Success!</strong> Registerd with username: {username}
+                        <br></br>
+                        <ul>Forwarding to tasks page...</ul>
                     </div>
                 )}
             </Form>
