@@ -3,9 +3,10 @@
 1. [Download .NET 8.0 (Linux, macOS, and Windows) (microsoft.com)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 1. Check the settings in: Backend/appsettings.json for MySql connection.
 1. Run in cmd: 
-1. dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
-1. dotnet dev-certs https --trust
 
+    ``dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org``
+   
+    ``dotnet dev-certs https --trust``
 
 
 Navigate to FullStackfinal/Backend folder in CMD. Run command: **dotnet run**
@@ -26,17 +27,14 @@ The passwords are sent to server by Plain text, since we are not using HTTPS as 
 
 After sending the request status 201 will be returned with the return data:
 
+```
 {
-
-`    `"id": 22,
-
-`    `"username": "mytestaccount",
-
-`    `"lastLogin": "2024-04-06T14:43:38.0714405+03:00",
-
-`    `"sessionToken": "f180a53e-ef96-4f58-af45-a22b0ed98a08"
-
+    "id": 22,
+    "username": "mytestaccount",
+    "lastLogin": "2024-04-06T14:43:38.0714405+03:00",
+    "sessionToken": "f180a53e-ef96-4f58-af45-a22b0ed98a08"
 }
+```
 
 
 We can now use the Session Token to access /protected view using Bearier token.
