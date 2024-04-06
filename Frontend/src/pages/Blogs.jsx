@@ -1,10 +1,27 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Container, Accordion, Button, Card } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 
+const token = sessionStorage.getItem("sessionToken");
+console.log('Session token:', token);
 
 const Blogs = () => {
+
+    // TOKEN not found -> LOGIN/REGISTER
+    const navigate  = useNavigate();
+    useEffect(() => {
+        // Check if the variable is null when the component mounts
+        if (token === null) {
+          // Navigate to the desired page if the variable is null
+           navigate('/');
+        }
+    }, [token, navigate]); 
+
+
+    
+
     return (
         <Container style={{ marginTop: '50px' }}>
             <div className="card">

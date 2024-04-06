@@ -25,7 +25,12 @@ const Home = () => {
             console.log(data);
             const sessionToken = data.sessionToken;
             console.log('Session token:', sessionToken);
+
             setShowSuccess(true);
+
+            // Add token to SessionStorage, so we can use it later for requesting data
+            sessionStorage.setItem("sessionToken", sessionToken);
+
             setTimeout(() => {
                 navigate('/tasks'); // Redirect to /tasks after 2 seconds
             }, 2000); // 2 seconds
