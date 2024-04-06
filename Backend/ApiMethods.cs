@@ -44,10 +44,12 @@ public static class ApiMethods {
     }
 
     public static void Logout(HttpContext context) {
-
+        
+        // Remove session token from sessions
         string bearerToken = SessionManager.GetTokenFromHeader(context.Request.Headers);
         SessionManager.RemoveSession(Guid.Parse(bearerToken));
 
+        // Let frontend handle the auto page forwarding
         context.Response.StatusCode = StatusCodes.Status204NoContent;
     }
 

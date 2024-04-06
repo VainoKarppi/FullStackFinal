@@ -30,7 +30,7 @@ internal class Program {
             var app = builder.Build();
 
             // Add Methods
-            app.MapPost("/task/create/{userId}", ApiMethods.CreateTask);
+            app.MapPost("/tasks/create/{userId}", ApiMethods.CreateTask);
             app.MapGet("/tasks/{userId}", ApiMethods.GetTasks);
             app.MapPost("/register", ApiMethods.Register);
             app.MapPost("/login", ApiMethods.Login);
@@ -49,7 +49,7 @@ internal class Program {
                 await context.Response.WriteAsync("Welcome to the protected resource!");
             });
 
-            // Run server on background so we can use CLI
+            // Run server on background so we can continue by using CLI
             _ = Task.Run(() => app.Run());
 
             await Task.Delay(1000);
@@ -70,7 +70,7 @@ internal class Program {
            
 
         } catch (Exception ex) {
-            Console.WriteLine(ex);
+            Console.WriteLine("\n"+ ex.ToString());
             Console.WriteLine($"\n\n{ex.Message}\n");
         }
         
