@@ -96,19 +96,22 @@ public static partial class Database {
 
     public static async Task UpdateUserAsync(User user, bool fireAndForget = false) {
 
-        // Update password only if not null
-        string query = "UPDATE users SET username=@username,";
-        if (user.Password is not null) query += " password_hash=@passwordHash,";
-        query += " last_login_time_utc=@last_login_time_utc WHERE user_id=@user_id";
+        // Check if there is nothing to update
+        if (user.Username is null && user.Password is null && user.LastLoginUTC is null) return;
+
+        // Update values only if not null
+        string query = "UPDATE users SET" ;
+        if (user.Username is not null) query += " username=@username,";
+        if (user.Password is not null) query += " password_hash=@password_hash,";
+        if (user.LastLoginUTC is not null) query += " last_login_time_utc=@last_login_time_utc";
+        query += " WHERE user_id=@user_id";
 
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
-        cmd.Parameters.AddWithValue("@username",user.Username);
-        cmd.Parameters.AddWithValue("@last_login_time_utc", user.LastLoginUTC);
-        cmd.Parameters.AddWithValue("@user_id", user.Id);
-
-        // Update password only if not null
-        if (user.Password is not null) cmd.Parameters.AddWithValue("@passwordHash", user.Password);
+        // Update values only if not null
+        if (user.Password is not null) cmd.Parameters.AddWithValue("@username", user.Username);
+        if (user.Password is not null) cmd.Parameters.AddWithValue("@password_hash", user.Password);
+        if (user.Password is not null) cmd.Parameters.AddWithValue("@last_login_time_utc", user.LastLoginUTC);
         
         if (fireAndForget) {
             _ = Task.Run(cmd.ExecuteNonQueryAsync);
