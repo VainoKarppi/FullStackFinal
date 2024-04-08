@@ -87,7 +87,7 @@ public static partial class Database {
         var id = Convert.ToInt32(await cmd.ExecuteScalarAsync());
         if (id == 0) throw new Exception($"Unable to add task for user! ({task.OwnerId}) - {task.Name}");
 
-        Console.WriteLine($"Added task for user: {task.OwnerId} - ({task.Name})");
+        Log($"Created new task ID:{task.Id}", LogCodes.TaskCreated, task.OwnerId);
         return id;
     }
 }

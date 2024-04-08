@@ -72,6 +72,7 @@ public static partial class Database {
 
     // TODO tasks and
     private static void CreateTables() {
+        int tablesCreated = 0;
         // Users
         string tableName = "users";
         using MySqlCommand users = new ($@"CREATE TABLE IF NOT EXISTS {tableName} (
@@ -81,7 +82,7 @@ public static partial class Database {
             salt INT NOT NULL,
             last_login_time_utc TIMESTAMP NULL DEFAULT NULL
         )", Connection);
-        users.ExecuteNonQuery();
+        tablesCreated += users.ExecuteNonQuery();
 
 
         // ActivityTypes
@@ -90,7 +91,7 @@ public static partial class Database {
             activity_type_id INT AUTO_INCREMENT PRIMARY KEY,
             name CHAR NOT NULL
         )", Connection);
-        activityTypes.ExecuteNonQuery();
+        tablesCreated += activityTypes.ExecuteNonQuery();
 
         // Activities
         tableName = "activities";
@@ -108,7 +109,7 @@ public static partial class Database {
             FOREIGN KEY (activity_type_id) REFERENCES activity_types(activity_type_id),
             FOREIGN KEY (owner_id) REFERENCES users(user_id)
         )", Connection);
-        activities.ExecuteNonQuery();
+        tablesCreated += activities.ExecuteNonQuery();
         
         // Tasks
         tableName = "tasks";
@@ -125,7 +126,7 @@ public static partial class Database {
             FOREIGN KEY (activity_id) REFERENCES activities(activity_id),
             FOREIGN KEY (owner_id) REFERENCES users(user_id)
         )", Connection);
-        tasks.ExecuteNonQuery();
+        tablesCreated += tasks.ExecuteNonQuery();
 
         // Logs
         tableName = "logs";
@@ -137,7 +138,9 @@ public static partial class Database {
             message TEXT NULL DEFAULT NULL,
             FOREIGN KEY (user_id) REFERENCES users(user_id)
         )", Connection);
-        logs.ExecuteNonQuery();
+        tablesCreated += logs.ExecuteNonQuery();
+
+        if (tablesCreated > 0) Console.WriteLine($"Automatically Created {tablesCreated} new tables!");
     }
     
 }

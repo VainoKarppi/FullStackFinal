@@ -32,6 +32,8 @@ public static partial class ApiMethods {
             // Return created task to client
             context.Response.StatusCode = StatusCodes.Status201Created;
             await context.Response.WriteAsJsonAsync(task);
+
+            Console.WriteLine($"Added task for UserId: {task.OwnerId} - ({task.Name})");
         } catch (Exception ex) {
             // Return error to client
             Console.WriteLine(ex);

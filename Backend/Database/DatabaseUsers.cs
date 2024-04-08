@@ -50,7 +50,6 @@ public static partial class Database {
             // Return actual user
             return user;
         } catch (Exception ex) {
-            Console.WriteLine(ex);
             return null;
         }
     }
@@ -79,6 +78,8 @@ public static partial class Database {
         var id = Convert.ToInt32(await cmd.ExecuteScalarAsync());
         if (id == 0) throw new Exception($"Unable to add user! ({user.Username})");
 
+        Log($"Created user", LogCodes.UserCreated, id);
+
         // Return ID
         return id;
     }
@@ -89,6 +90,8 @@ public static partial class Database {
         cmd.Parameters.AddWithValue("@user_id", userId);
         int rowsAffected = await cmd.ExecuteNonQueryAsync();
         if (rowsAffected != 1) throw new Exception($"Unable to remove user! {userId}");
+
+        Log($"Removed user", LogCodes.UserRemoved, userId);
     }
 
     private static async Task<bool> UsernameInUseAsync(string username) {
@@ -96,11 +99,17 @@ public static partial class Database {
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
         cmd.Parameters.AddWithValue("@username", username);
-        int? count = (int?)await cmd.ExecuteScalarAsync();
+        object? count = await cmd.ExecuteScalarAsync();
 
-        return count is null || count > 0;
+        Console.WriteLine(count);
+        if (count is null) return false;
+
+        return Convert.ToInt32(count) > 0;
     }
     public static async Task UpdateUserAsync(User user, bool fireAndForget = false) {
+
+        // Make sure user.Id is found!
+        if (user.Id is null) throw new ArgumentNullException(nameof(user.Id));
 
         // Check if there is nothing to update
         if (user.Username is null && user.Password is null && user.LastLoginUTC is null) return;
@@ -118,9 +127,10 @@ public static partial class Database {
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
         // Update values only if not null
-        if (user.Password is not null) cmd.Parameters.AddWithValue("@username", user.Username);
+        if (user.Username is not null) cmd.Parameters.AddWithValue("@username", user.Username);
         if (user.Password is not null) cmd.Parameters.AddWithValue("@password_hash", user.Password);
-        if (user.Password is not null) cmd.Parameters.AddWithValue("@last_login_time_utc", user.LastLoginUTC);
+        if (user.LastLoginUTC is not null) cmd.Parameters.AddWithValue("@last_login_time_utc", user.LastLoginUTC);
+        cmd.Parameters.AddWithValue("@user_id", user.Id);
         
         if (fireAndForget) {
             _ = Task.Run(cmd.ExecuteNonQueryAsync);
@@ -128,5 +138,6 @@ public static partial class Database {
             int rowsAffected = await cmd.ExecuteNonQueryAsync();
             if (rowsAffected != 1) throw new Exception($"Unable to update user! {user.Id}");
         }
+        Log($"Updated user. Username:{user.Username != null}, Password:{user.Password != null}, LoginTime:{user.LastLoginUTC != null}", LogCodes.UserUpdated, user.Id);
     }
 }

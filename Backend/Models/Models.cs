@@ -1,6 +1,14 @@
 
 namespace Backend;
 
+public enum LogCodes {
+    UserCreated,
+    UserUpdated,
+    UserRemoved,
+    TaskCreated,
+    TaskUpdated,
+    TaskRemoved,
+}
 public class TodoTask() {
     public enum TaskStatus {
         InProgress,

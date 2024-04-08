@@ -149,7 +149,7 @@ public static partial class ApiMethods {
             });
             Console.WriteLine($"Succesfully created account: {user.Id} ({user.Username})");
         } catch (Exception ex) {
-            Console.WriteLine(ex.Message);
+            Console.WriteLine(ex);
             if (ex is UsernameInUseException) {
                 context.Response.StatusCode = StatusCodes.Status409Conflict;
                 await context.Response.WriteAsync("Username already in use");
