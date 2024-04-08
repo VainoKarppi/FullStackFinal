@@ -94,6 +94,7 @@ public static partial class Database {
         string query = "DELETE FROM users WHERE user_id=@user_id";
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
+        cmd.Parameters.AddWithValue("@user_id", userId);
         int rowsAffected = await cmd.ExecuteNonQueryAsync();
         if (rowsAffected != 1) throw new Exception($"Unable to remove user! {userId}");
     }

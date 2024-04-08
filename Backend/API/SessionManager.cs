@@ -18,6 +18,9 @@ public static class SessionManager {
     private static readonly Dictionary<Guid,(int, DateTime)> Sessions = [];
     private static List<Guid> DevSessions = [Guid.Parse(Program.Configuration.GetValue<string>("DevToken")!)];
 
+    public static int GetUserIdByGuid(Guid guid) {
+        return Sessions[guid].Item1;
+    }
     public static void AddSession(int userId, Guid guid, bool devSession = false) {
         Sessions.Add(guid,(userId,DateTime.Now));
         if (devSession) DevSessions.Add(guid);
@@ -86,7 +89,7 @@ public static class SessionManager {
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 await context.Response.WriteAsync(ex.Message);
             }
-            
+
             return false;
         }
     }

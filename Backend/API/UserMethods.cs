@@ -48,12 +48,13 @@ public static partial class ApiMethods {
         user.LastLoginUTC = DateTime.UtcNow;
         await Database.UpdateUserAsync(user,true);
     }
-    public static void Logout(HttpContext context) {
+    public static async Task Logout(HttpContext context) {
         try {
+            if (!await SessionManager.Authorized(context)) return;
+
             // Remove session token from sessions
             string bearerToken = SessionManager.GetTokenFromHeader(context.Request.Headers);
-            bool removed = SessionManager.RemoveSession(Guid.Parse(bearerToken));
-            if (!removed) throw new Exception("Invalid session token");
+            SessionManager.RemoveSession(Guid.Parse(bearerToken));
 
             Console.WriteLine($"User Logged out! {bearerToken}");
             // Let frontend handle the auto page forwarding
@@ -62,14 +63,25 @@ public static partial class ApiMethods {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
         }
     }
-    public static async Task DeleteUser(HttpContext context, int userId) {
+    public static async Task DeleteUser(HttpContext context) {
         try {
-            if (!await SessionManager.Authorized(context, userId)) return;
+            if (!await SessionManager.Authorized(context)) return;
+
+            string bearerToken = SessionManager.GetTokenFromHeader(context.Request.Headers);
+            Guid token = Guid.Parse(bearerToken);
+
+            // Get user ID from sessions list
+            int userId = SessionManager.GetUserIdByGuid(token);
 
             // Remove user from Database
             await Database.RemoveUserAsync(userId);
 
+            // Remove token from sessions
+            SessionManager.RemoveSession(token);
+
             context.Response.StatusCode = StatusCodes.Status200OK;
+
+            Console.WriteLine($"Removed user! ID:{userId}");
         } catch (Exception ex) {
             Console.WriteLine(ex);
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
