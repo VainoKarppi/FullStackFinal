@@ -1,6 +1,8 @@
 
 
 
+using System.Diagnostics;
+
 namespace Backend;
 
 public static partial class ApiMethods {
@@ -33,10 +35,10 @@ public static partial class ApiMethods {
             context.Response.StatusCode = StatusCodes.Status201Created;
             await context.Response.WriteAsJsonAsync(task);
 
-            Console.WriteLine($"Added task for UserId: {task.OwnerId} - ({task.Name})");
+            if (Program.DEBUG) Console.WriteLine($"Added task for UserId: {task.OwnerId} - ({task.Name})");
         } catch (Exception ex) {
             // Return error to client
-            Console.WriteLine(ex);
+            if (Program.DEBUG) Console.WriteLine(ex);
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             await context.Response.WriteAsync(ex.Message);
         }
@@ -54,7 +56,7 @@ public static partial class ApiMethods {
             await context.Response.WriteAsJsonAsync(tasks);
         } catch (Exception ex) {
             // Return error to client
-            Console.WriteLine(ex);
+            if (Program.DEBUG) Console.WriteLine(ex);
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             await context.Response.WriteAsync(ex.Message);
         }    
@@ -75,7 +77,7 @@ public static partial class ApiMethods {
             await context.Response.WriteAsJsonAsync(task);
         } catch (Exception ex) {
             // Return error to client
-            Console.WriteLine(ex);
+            if (Program.DEBUG) Console.WriteLine(ex);
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             await context.Response.WriteAsync(ex.Message);
         }    

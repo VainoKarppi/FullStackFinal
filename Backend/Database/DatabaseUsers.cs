@@ -101,7 +101,6 @@ public static partial class Database {
         cmd.Parameters.AddWithValue("@username", username);
         object? count = await cmd.ExecuteScalarAsync();
 
-        Console.WriteLine(count);
         if (count is null) return false;
 
         return Convert.ToInt32(count) > 0;

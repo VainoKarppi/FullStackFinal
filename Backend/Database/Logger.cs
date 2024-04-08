@@ -6,7 +6,7 @@ namespace Backend;
 
 public static partial class Database {
     public static void Log(string message, LogCodes code, int? userId = null) {
-            try {
+        try {
             // Add userId to query if exists and not null is used
             string query = "INSERT INTO logs (message,timestamp,code";
             if (userId is not null) query += ",user_id";
@@ -23,8 +23,6 @@ public static partial class Database {
             
             // Dont wait for response, to continue faster
             _ = Task.Run(cmd.ExecuteNonQueryAsync);
-        } catch (Exception ex) {
-            Console.WriteLine(ex);
-        }
+        } catch (Exception) {}
     }
 }

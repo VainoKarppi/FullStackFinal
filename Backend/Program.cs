@@ -14,6 +14,7 @@ namespace Backend;
 
 internal class Program {
     public static IConfigurationRoot Configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+    public static bool DEBUG = Configuration.GetValue<bool>("Debug");
     private static async Task Main(string[] args) {
         try {
             var builder = WebApplication.CreateBuilder(args);

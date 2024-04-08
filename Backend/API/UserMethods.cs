@@ -56,10 +56,11 @@ public static partial class ApiMethods {
             string bearerToken = SessionManager.GetTokenFromHeader(context.Request.Headers);
             SessionManager.RemoveSession(Guid.Parse(bearerToken));
 
-            Console.WriteLine($"User Logged out! {bearerToken}");
+            if (Program.DEBUG) Console.WriteLine($"User Logged out! {bearerToken}");
             // Let frontend handle the auto page forwarding
             context.Response.StatusCode = StatusCodes.Status204NoContent;
-        } catch (Exception) {
+        } catch (Exception ex) {
+            if (Program.DEBUG) Console.WriteLine(ex);
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
         }
     }
@@ -81,9 +82,9 @@ public static partial class ApiMethods {
 
             context.Response.StatusCode = StatusCodes.Status200OK;
 
-            Console.WriteLine($"Removed user! ID:{userId}");
+            if (Program.DEBUG) Console.WriteLine($"Removed user! ID:{userId}");
         } catch (Exception ex) {
-            Console.WriteLine(ex);
+            if (Program.DEBUG) Console.WriteLine(ex);
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         }
     }
@@ -103,8 +104,10 @@ public static partial class ApiMethods {
             await Database.UpdateUserAsync(user);
             
             context.Response.StatusCode = StatusCodes.Status204NoContent;
+
+            if (Program.DEBUG) Console.WriteLine($"Updated user: {userId}");
         } catch (Exception ex) {
-            Console.WriteLine(ex);
+            if (Program.DEBUG) Console.WriteLine(ex);
             if (ex is UsernameInUseException) {
                 context.Response.StatusCode = StatusCodes.Status409Conflict;
                 await context.Response.WriteAsync("Username already in use");
@@ -147,9 +150,9 @@ public static partial class ApiMethods {
                 user.SessionToken,
                 TokenExpirationUTC = DateTime.UtcNow.AddSeconds(SessionManager.Timeout)
             });
-            Console.WriteLine($"Succesfully created account: {user.Id} ({user.Username})");
+            if (Program.DEBUG) Console.WriteLine($"Created new account. ID:{user.Id}, NAME:{user.Username}");
         } catch (Exception ex) {
-            Console.WriteLine(ex);
+            if (Program.DEBUG) Console.WriteLine(ex);
             if (ex is UsernameInUseException) {
                 context.Response.StatusCode = StatusCodes.Status409Conflict;
                 await context.Response.WriteAsync("Username already in use");
@@ -164,7 +167,4 @@ public static partial class ApiMethods {
             await context.Response.WriteAsync(ex.Message);
         }
     }
-
-
- 
 }
