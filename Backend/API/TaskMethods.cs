@@ -40,11 +40,14 @@ public static partial class ApiMethods {
         }
     }
 
-    public static async Task GetTasks(HttpContext context, int userId, int lastTaskId = 0) {
+    public static async Task GetTasks(HttpContext context, int userId, string? filter, int lastTaskId = 0) {
         try {
             if (!await SessionManager.Authorized(context, userId)) return;
             
-            List<TodoTask> tasks = await Database.GetTasksAsync(userId, lastTaskId);
+            // Get tasks from DB with parameters: filter, lastTaskId
+            // LastTaskId can be used to fetch next 10 available tasks, since the limit is set to 10 tasks only per fetch
+            List<TodoTask> tasks = await Database.GetTasksAsync(userId, filter, lastTaskId);
+
             context.Response.StatusCode = StatusCodes.Status200OK;
             await context.Response.WriteAsJsonAsync(tasks);
         } catch (Exception ex) {

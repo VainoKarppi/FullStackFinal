@@ -141,8 +141,14 @@ public static partial class Database {
         }
     }
 
-    public static async Task<List<TodoTask>> GetTasksAsync(int userId, int offset = 0) {
-        string query = "SELECT * FROM tasks WHERE owner_id=@owner_id ORDER BY task_id LIMIT 10 OFFSET " + offset;
+    public static async Task<List<TodoTask>> GetTasksAsync(int userId, string? filter, int offset = 0) {
+        string query = "SELECT * FROM tasks WHERE owner_id=@owner_id ";
+
+        // Add Filter if in use
+        if (!string.IsNullOrEmpty(filter)) query += $" AND LOWER(name) LIKE '%{filter.ToLower()}%' ";
+
+        query += "ORDER BY task_id LIMIT 10 OFFSET " + offset;
+
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
         cmd.Parameters.AddWithValue("@owner_id", userId);
