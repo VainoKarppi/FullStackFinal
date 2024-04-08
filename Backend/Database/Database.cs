@@ -90,8 +90,12 @@ public static partial class Database {
         // Return ID
         return id;
     }
-    public static Task<bool> RemoveUserAsync(User user) {
-        throw new NotImplementedException();
+    public static async Task RemoveUserAsync(int userId) {
+        string query = "DELETE FROM users WHERE user_id=@user_id";
+        using MySqlCommand cmd = new MySqlCommand(query, Connection);
+
+        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+        if (rowsAffected != 1) throw new Exception($"Unable to remove user! {userId}");
     }
 
     public static async Task UpdateUserAsync(User user, bool fireAndForget = false) {

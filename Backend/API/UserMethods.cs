@@ -62,7 +62,19 @@ public static partial class ApiMethods {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
         }
     }
+    public static async Task DeleteUser(HttpContext context, int userId) {
+        try {
+            if (!await SessionManager.Authorized(context, userId)) return;
 
+            // Remove user from Database
+            await Database.RemoveUserAsync(userId);
+
+            context.Response.StatusCode = StatusCodes.Status200OK;
+        } catch (Exception ex) {
+            Console.WriteLine(ex);
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        }
+    }
     public static async Task UpdateUser(HttpContext context, int userId) {
         try {
             if (!await SessionManager.Authorized(context, userId)) return;
