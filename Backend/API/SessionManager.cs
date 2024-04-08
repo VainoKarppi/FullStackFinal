@@ -6,83 +6,87 @@
 // On client removal Session Token needs to be cleared from the list
 
 
+using System.Text.Json;
+
 namespace Backend;
 
 public static class SessionManager {
-
-    // In minutes
-    private const int Timeout = 5;
+    public const int Timeout = 5*60; // In seconds
 
     // First element in object array is dateTime when token expires.
     // Seconds element in object array is the 
-    private static readonly Dictionary<Guid,DateTime> Sessions = [];
+    private static readonly Dictionary<Guid,(int, DateTime)> Sessions = [];
+    private static List<Guid> DevSessions = [Guid.Parse(Program.Configuration.GetValue<string>("DevToken")!)];
 
-    public static void AddSession(Guid guid) {
-        Sessions.Add(guid,DateTime.Now);
+    public static void AddSession(int userId, Guid guid, bool devSession = false) {
+        Sessions.Add(guid,(userId,DateTime.Now));
+        if (devSession) DevSessions.Add(guid);
     }
 
     public static bool RemoveSession(Guid guid) {
+        if (DevSessions.Contains(guid)) return true; // Dont remove CLI generated tokens
         return Sessions.Remove(guid);
     }
-    public static bool IsTokenSessionValid(string sessionGuid) {
-        try {
-            // TODO Add another timer to validate user from DB every X minutes
+    public static void ValidateSessionToken(Guid sessionGuid, int? userId) {
+    
+        // Return true for dev sessions
+        if (DevSessions.Contains(sessionGuid)) return;
 
-            Guid guid = Guid.Parse(sessionGuid);
+        // Throws error if not found
+        // Get by user id and by token
+        KeyValuePair<Guid,(int,DateTime)> pair = Sessions.First(x => x.Key == sessionGuid);
 
-            // Throws error if not found
-            // Get by user id and by token
-            KeyValuePair<Guid,DateTime> pair = Sessions.First(x => x.Key == guid);
+        // Make sure user requester ID matches
+        if (userId is not null && pair.Value.Item1 != userId) throw new ArgumentNullException();
 
-            // Check session timer
-            if (DateTime.Now < pair.Value.AddMinutes(Timeout)) return true;
-
+        // Check session timer. Returns true if SESSION IS VALID
+        if (DateTime.Now > pair.Value.Item2.AddSeconds(Timeout))  {
             // Remove from session storage
-            Sessions.Remove(guid);
-
-            // Token expired. Recheck user authentication from Database!
-            return false;
-        } catch (Exception) {
-            return false;
+            RemoveSession(sessionGuid);
+            throw new TimeoutException(); // Token has expired!
         }
-        
     }
 
     public static string GetTokenFromHeader(IHeaderDictionary headers) {
         headers.TryGetValue("Authorization", out var sessionToken);
 
         string? bearerToken = sessionToken.ToString().Substring("Bearer ".Length).Trim();
-        if (string.IsNullOrEmpty(bearerToken)) throw new KeyNotFoundException("No Bearer token found for header!");
+        if (string.IsNullOrEmpty(bearerToken)) throw new ArgumentException("No Bearer token found for header!");
 
         return bearerToken;
     }
 
-    public static async Task<bool> Authorized(HttpContext context) {
+    public static async Task<bool> Authorized(HttpContext context, int? userId = null) {
         try {
             // Check if session token is provided in request header
             string bearerToken = GetTokenFromHeader(context.Request.Headers);
             
+            Guid sessionGuid = Guid.Parse(bearerToken);
 
-            // Make sure bearer token is in use! (List of active tokens)
-            if (!IsTokenSessionValid(bearerToken)) {
-                context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                await context.Response.WriteAsync("Please login first!");
-                return false;
-            }
+            // Make sure bearer token is in use! (List of active tokens for active users)
+            ValidateSessionToken(sessionGuid, userId);
 
             // Update session timeout
-            Sessions[Guid.Parse(bearerToken)] = DateTime.Now;
+            if (!DevSessions.Contains(sessionGuid))
+                Sessions[sessionGuid] = (Sessions[sessionGuid].Item1, DateTime.Now);
 
             return true;
         } catch (Exception ex) {
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            
-            // Write response Exception
-            if (ex is KeyNotFoundException)
-                await context.Response.WriteAsync("Bearer token not found!");
-            else
+            // Write response Exceptions
+            if (ex is InvalidOperationException || ex is ArgumentNullException) {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsync("Invalid token");
+            } else if (ex is ArgumentException) {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await context.Response.WriteAsync("Bearer token not found");
+            } else if (ex is TimeoutException) {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsync("Token has expired");
+            } else {
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 await context.Response.WriteAsync(ex.Message);
-
+            }
+            
             return false;
         }
     }

@@ -33,14 +33,12 @@ internal class Program {
             var app = builder.Build();
 
             // Add CORS policies
-            app.UseCors(policy => policy
-                .AllowAnyOrigin()
-                .AllowAnyMethod()
-                .AllowAnyHeader());
+            app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 
             // Add Methods
             app.MapPost("/tasks/create/{userId}", ApiMethods.CreateTask);
             app.MapGet("/tasks/{userId}", ApiMethods.GetTasks);
+            app.MapGet("/tasks/{userId}/{taskId}", ApiMethods.GetTask);
             app.MapPost("/register", ApiMethods.Register);
             app.MapPost("/login", ApiMethods.Login);
             app.MapPost("/logout", ApiMethods.Logout);
@@ -65,13 +63,14 @@ internal class Program {
             Console.WriteLine("STARTED API SERVER");
 
             new Thread(() => {
+                Console.Beep();
                 Console.WriteLine("\n\n");
                 while (true) {
                     string? input = Console.ReadLine()!.ToLower().Trim();;
                     if (input == "exit") break;
                     if (input == "addtesttoken") {
                         Guid guid = Guid.NewGuid();
-                        SessionManager.AddSession(guid);
+                        SessionManager.AddSession(999999, guid, true); // Add DEV token with all permissions
                         Console.WriteLine($"Test Token is: {guid}");
                     }
                 }

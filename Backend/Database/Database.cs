@@ -6,14 +6,17 @@
 // TODO Remove Task
 
 
+using System.Data;
+using System.Runtime.Serialization;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http.HttpResults;
 using MySqlConnector;
 
 namespace Backend;
 public static partial class Database {
     private static string GetSalt(string username) {
         // Get user salt from database
-        string sql = "SELECT DISTINCT Salt FROM users WHERE username=@username";
+        string sql = "SELECT DISTINCT salt FROM users WHERE username=@username";
         using var command = new MySqlCommand(sql, Connection);
         command.Parameters.AddWithValue("@username", username);
 
@@ -34,21 +37,21 @@ public static partial class Database {
 
 
             // Get data for User From database using username and password hash
-            string query = "SELECT id,username,lastLoginTime FROM users WHERE username=@username AND password_hash=@passwordHash";
+            string query = "SELECT id,username,last_login_time_utc FROM users WHERE username=@username AND password_hash=@password_hash";
             using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
             cmd.Parameters.AddWithValue("@username", username);
-            cmd.Parameters.AddWithValue("@passwordHash", hashedPassword);
+            cmd.Parameters.AddWithValue("@password_hash", hashedPassword);
 
             User? user = null;
 
             // Read USER data from Database
-            var reader = await cmd.ExecuteReaderAsync();
+            using MySqlDataReader reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync()) {
                 user = new User() {
-                    Id = reader.GetInt32("id"),
+                    Id = reader.GetInt32("user_id"),
                     Username = reader.GetString("username"),
-                    LastLogin = reader.GetDateTime("lastLoginTime")
+                    LastLoginUTC = reader.GetDateTime("last_login_time_utc")
                 };
             }
 
@@ -63,21 +66,22 @@ public static partial class Database {
         }
     }
     public static async Task<int> AddUserAsync(User user) {
-        string query = @"INSERT INTO users (username, password_hash, salt, lastLoginTime)
-            VALUES (@username, @passwordHash, @salt, @lastLoginTime);
+
+        string query = @"INSERT INTO users (username, password_hash, salt, last_login_time_utc)
+            VALUES (@username, @password_hash, @salt, @last_login_time_utc);
             SELECT LAST_INSERT_ID();
         ";
 
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
         // Calculate random key as salt and hash it
-        int salt = new Random().Next(10000, 100000);
-        string hashedPassword = HashCalculator.ComputeSHA256Hash(user.PasswordHash + salt.ToString());
+        int salt = new Random().Next(0, 100000);
+        string hashedPassword = HashCalculator.ComputeSHA256Hash(user.Password + salt.ToString());
 
         cmd.Parameters.AddWithValue("@username", user.Username);
-        cmd.Parameters.AddWithValue("@passwordHash", hashedPassword);
+        cmd.Parameters.AddWithValue("@password_hash", hashedPassword);
         cmd.Parameters.AddWithValue("@salt", salt);
-        cmd.Parameters.AddWithValue("@lastLoginTime", user.LastLogin);
+        cmd.Parameters.AddWithValue("@last_login_time_utc", user.LastLoginUTC);
 
         // Return created ID from the database
         var id = Convert.ToInt32(await cmd.ExecuteScalarAsync());
@@ -94,17 +98,17 @@ public static partial class Database {
 
         // Update password only if not null
         string query = "UPDATE users SET username=@username,";
-        if (user.PasswordHash is not null) query += " password_hash=@passwordHash,";
-        query += " lastLoginTime=@logintime WHERE Id=@id";
+        if (user.Password is not null) query += " password_hash=@passwordHash,";
+        query += " last_login_time_utc=@last_login_time_utc WHERE user_id=@user_id";
 
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
         cmd.Parameters.AddWithValue("@username",user.Username);
-        cmd.Parameters.AddWithValue("@logintime", user.LastLogin);
-        cmd.Parameters.AddWithValue("@id", user.Id);
+        cmd.Parameters.AddWithValue("@last_login_time_utc", user.LastLoginUTC);
+        cmd.Parameters.AddWithValue("@user_id", user.Id);
 
         // Update password only if not null
-        if (user.PasswordHash is not null) cmd.Parameters.AddWithValue("@passwordHash", user.PasswordHash);
+        if (user.Password is not null) cmd.Parameters.AddWithValue("@passwordHash", user.Password);
         
         if (fireAndForget) {
             _ = Task.Run(cmd.ExecuteNonQueryAsync);
@@ -114,24 +118,27 @@ public static partial class Database {
         }
     }
 
-    public static async Task<List<TodoTask>> GetTasksAsync(int userId) {
-        string query = "SELECT * FROM tasks WHERE id=@id";
+    public static async Task<List<TodoTask>> GetTasksAsync(int userId, int offset = 0) {
+        string query = "SELECT * FROM tasks WHERE owner_id=@owner_id ORDER BY task_id LIMIT 10 OFFSET " + offset;
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
-        cmd.Parameters.AddWithValue("@id", userId);
+        cmd.Parameters.AddWithValue("@owner_id", userId);
 
         // Read data from Database
         List<TodoTask> tasks = [];
-        var reader = await cmd.ExecuteReaderAsync();
+        using MySqlDataReader reader = await cmd.ExecuteReaderAsync();
         while (await reader.ReadAsync()) {
             TodoTask task = new() {
-                Id = reader.GetInt32("id"),
-                OwnerId = reader.GetInt32("user"),
+                Id = reader.GetInt32("task_id"),
+                OwnerId = reader.GetInt32("owner_id"),
                 Name = reader.GetString("name"),
-                //task.Status = reader.GetInt16("password_hash");
-                StartDate = reader.GetDateTime("start"),
-                EndDate = reader.GetDateTime("end")
+                Description = await reader.IsDBNullAsync("description") ? null : reader.GetString("description"),
+                Status = (TodoTask.TaskStatus?)reader.GetInt32("status"),
+                StartDateUTC = reader.GetDateTime("start_date_utc"),
+                EndDateUTC =  await reader.IsDBNullAsync("end_date_utc") ? null : reader.GetDateTime("end_date_utc")
             };
+
+            task.IsCompleted = task.Status is TodoTask.TaskStatus.InProgress;
 
             tasks.Add(task);
         }
@@ -139,22 +146,76 @@ public static partial class Database {
         return tasks;
     }
 
-    // TODO
-    public static async Task<TodoTask> CreateTaskAsync(int userId) {
-
-        TodoTask task = new() {
-
-        };
-        string query = "UPDATE tasks SET FROM tasks WHERE id=@id";
+    public static async Task<TodoTask?> GetTaskAsync(int userId, int taskId) {
+        string query = "SELECT * FROM tasks WHERE owner_id=@owner_id AND task_id=@task_id";
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
-        cmd.Parameters.AddWithValue("@id", userId);
+        cmd.Parameters.AddWithValue("@owner_id", userId);
+        cmd.Parameters.AddWithValue("@task_id",taskId);
 
-        int rowsAffected = await cmd.ExecuteNonQueryAsync();
-        if (rowsAffected != 1) throw new Exception($"Unable to add task for user! {userId}");
+        // Read data from Database
+        List<TodoTask> tasks = [];
+        using MySqlDataReader reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync()) {
+            TodoTask task = new() {
+                Id = reader.GetInt32("task_id"),
+                OwnerId = reader.GetInt32("owner_id"),
+                Name = reader.GetString("name"),
+                Description = await reader.IsDBNullAsync("description") ? null : reader.GetString("description"),
+                Status = (TodoTask.TaskStatus?)reader.GetInt32("status"),
+                StartDateUTC = reader.GetDateTime("start_date_utc"),
+                EndDateUTC =  await reader.IsDBNullAsync("end_date_utc") ? null : reader.GetDateTime("end_date_utc")
+            };
 
-        return task;
+            task.IsCompleted = task.Status is TodoTask.TaskStatus.InProgress;
+
+            return task;
+        }
+
+        return null;
+    }
+
+
+    // TODO
+    public static async Task<int> CreateTaskAsync(TodoTask task) {
+
+        string query = @"INSERT INTO tasks (owner_id, name, description, start_date_utc, status)
+            VALUES (@owner_id, @name, @description, @start_date_utc, @status);
+            SELECT LAST_INSERT_ID();
+        ";
+        using MySqlCommand cmd = new MySqlCommand(query, Connection);
+
+        cmd.Parameters.AddWithValue("@owner_id", task.OwnerId);
+        cmd.Parameters.AddWithValue("@name", task.Name);
+        cmd.Parameters.AddWithValue("@description", task.Description);
+        cmd.Parameters.AddWithValue("@start_date_utc", task.StartDateUTC);
+        cmd.Parameters.AddWithValue("@status", task.Status);
+
+        // Return created ID from the database
+        var id = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+        if (id == 0) throw new Exception($"Unable to add task for user! ({task.OwnerId}) - {task.Name}");
+
+        Console.WriteLine($"Added task for user: {task.OwnerId} - ({task.Name})");
+        return id;
     }
 }
 
+[Serializable]
+internal class NotFoundException : Exception
+{
+    public NotFoundException()
+    {
+    }
 
+    public NotFoundException(string? message) : base(message)
+    {
+    }
+
+    public NotFoundException(string? message, Exception? innerException) : base(message, innerException)
+    {
+    }
+
+    protected NotFoundException(SerializationInfo info, StreamingContext context) : base(info, context)
+    {
+    }
+}

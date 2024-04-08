@@ -72,75 +72,73 @@ public static partial class Database {
 
     // TODO tasks and
     private static void CreateTables() {
-        string tableName = "tasks";
-        using MySqlCommand weatherdata = new ($@"CREATE TABLE IF NOT EXISTS {tableName} (
-            Id INT AUTO_INCREMENT PRIMARY KEY,
-            device_name TEXT,
-            timestamp TIMESTAMP,
-            humidity FLOAT NULL DEFAULT NULL,
-            temperature FLOAT NULL DEFAULT NULL,
-            wind FLOAT NULL DEFAULT NULL,
-            pressure FLOAT NULL DEFAULT NULL
-        )", Connection);
-        weatherdata.ExecuteNonQuery();
-
-        tableName = "users";
+        // Users
+        string tableName = "users";
         using MySqlCommand users = new ($@"CREATE TABLE IF NOT EXISTS {tableName} (
-            Id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(64) NOT NULL,
-            password_hash TEXT NOT NULL,
+            password_hash VARCHAR(64) NOT NULL,
             salt INT NOT NULL,
-            lastLoginTime TIMESTAMP NULL DEFAULT NULL
+            last_login_time_utc TIMESTAMP NULL DEFAULT NULL
         )", Connection);
         users.ExecuteNonQuery();
 
+
+        // ActivityTypes
+        tableName = "activity_types";
+        using MySqlCommand activityTypes = new ($@"CREATE TABLE IF NOT EXISTS {tableName} (
+            activity_type_id INT AUTO_INCREMENT PRIMARY KEY,
+            name CHAR NOT NULL
+        )", Connection);
+        activityTypes.ExecuteNonQuery();
+
+        // Activities
+        tableName = "activities";
+        using MySqlCommand activities = new ($@"CREATE TABLE IF NOT EXISTS {tableName} (
+            activity_id INT AUTO_INCREMENT PRIMARY KEY,
+            owner_id INT NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            description TEXT,
+            url VARCHAR(255),
+            start_date_utc DATE,
+            end_date_utc DATE,
+            status VARCHAR(50),
+            tags VARCHAR(255),
+            activity_type_id INT NULL DEFAULT NULL,
+            FOREIGN KEY (activity_type_id) REFERENCES activity_types(activity_type_id),
+            FOREIGN KEY (owner_id) REFERENCES users(user_id)
+        )", Connection);
+        activities.ExecuteNonQuery();
         
+        // Tasks
+        tableName = "tasks";
+        using MySqlCommand tasks = new ($@"CREATE TABLE IF NOT EXISTS {tableName} (
+            task_id INT AUTO_INCREMENT PRIMARY KEY,
+            owner_id INT NOT NULL,
+            activity_id INT NULL DEFAULT NULL,
+            name VARCHAR(255) NOT NULL,
+            description TEXT NULL DEFAULT NULL,
+            start_date_utc TIMESTAMP NOT NULL,
+            end_date_utc TIMESTAMP NULL DEFAULT NULL,
+            tags VARCHAR(255) NULL DEFAULT NULL,
+            status TINYINT UNSIGNED NOT NULL,
+            FOREIGN KEY (activity_id) REFERENCES activities(activity_id),
+            FOREIGN KEY (owner_id) REFERENCES users(user_id)
+        )", Connection);
+        tasks.ExecuteNonQuery();
+
+        // Logs
         tableName = "logs";
         using MySqlCommand logs = new ($@"CREATE TABLE IF NOT EXISTS {tableName} (
-            Id INT AUTO_INCREMENT PRIMARY KEY,
+            log_id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NULL DEFAULT NULL,
             timestamp TIMESTAMP,
             code INT NULL DEFAULT NULL,
             message TEXT NULL DEFAULT NULL,
-            FOREIGN KEY (user_id) REFERENCES users(Id)
+            FOREIGN KEY (user_id) REFERENCES users(user_id)
         )", Connection);
         logs.ExecuteNonQuery();
     }
     
 }
 
-
-
-public class TodoTask {
-    public enum TaskStatus {
-        New,
-        InProgress,
-        Done,
-        Cancelled
-    }
-
-    public int Id { get; set; }
-    public int OwnerId { get; set; }
-    public string? Name { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime? EndDate { get; set; }
-    public string[]? Tags { get; set; }
-    public TaskStatus? Status { get; set; }
-}
-
-public class User {
-    public int? Id { get; set; }
-    public string? Username { get; set; }
-    public DateTime? LastLogin { get; set; }
-    public string? PasswordHash { get; set; }
-    public Guid? SessionToken { get; set; }
-    public string? Salt { get; set; }
-
-    public User() {} 
-    public User(string username, string passwordHash) {
-        Username = username;
-        PasswordHash = passwordHash;
-        LastLogin = DateTime.Now;
-        SessionToken = Guid.NewGuid();;
-    }
-}
