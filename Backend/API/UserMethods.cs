@@ -105,6 +105,11 @@ public static partial class ApiMethods {
             context.Response.StatusCode = StatusCodes.Status204NoContent;
         } catch (Exception ex) {
             Console.WriteLine(ex);
+            if (ex is UsernameInUseException) {
+                context.Response.StatusCode = StatusCodes.Status409Conflict;
+                await context.Response.WriteAsync("Username already in use");
+                return;
+            }
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         }
 
@@ -145,6 +150,11 @@ public static partial class ApiMethods {
             Console.WriteLine($"Succesfully created account: {user.Id} ({user.Username})");
         } catch (Exception ex) {
             Console.WriteLine(ex.Message);
+            if (ex is UsernameInUseException) {
+                context.Response.StatusCode = StatusCodes.Status409Conflict;
+                await context.Response.WriteAsync("Username already in use");
+                return;
+            }
             if (ex is ArgumentException) {
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 await context.Response.WriteAsync("Username of max 64 chars is only allowed");

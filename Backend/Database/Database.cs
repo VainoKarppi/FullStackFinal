@@ -67,6 +67,9 @@ public static partial class Database {
     }
     public static async Task<int> AddUserAsync(User user) {
 
+        // Check if username is already in use by other user
+        if(user.Username is not null && await UsernameInUseAsync(user.Username)) throw new UsernameInUseException();
+        
         string query = @"INSERT INTO users (username, password_hash, salt, last_login_time_utc)
             VALUES (@username, @password_hash, @salt, @last_login_time_utc);
             SELECT LAST_INSERT_ID();
@@ -99,10 +102,22 @@ public static partial class Database {
         if (rowsAffected != 1) throw new Exception($"Unable to remove user! {userId}");
     }
 
+    private static async Task<bool> UsernameInUseAsync(string username) {
+        string query = @"SELECT COUNT(*) FROM users WHERE username=@username";
+        using MySqlCommand cmd = new MySqlCommand(query, Connection);
+
+        cmd.Parameters.AddWithValue("@username", username);
+        int? count = (int?)await cmd.ExecuteScalarAsync();
+
+        return count is null || count > 0;
+    }
     public static async Task UpdateUserAsync(User user, bool fireAndForget = false) {
 
         // Check if there is nothing to update
         if (user.Username is null && user.Password is null && user.LastLoginUTC is null) return;
+
+        // Check if new username is already in use
+        if(user.Username is not null && await UsernameInUseAsync(user.Username)) throw new UsernameInUseException();
 
         // Update values only if not null
         string query = "UPDATE users SET" ;

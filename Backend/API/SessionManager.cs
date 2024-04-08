@@ -59,6 +59,8 @@ public static class SessionManager {
         return bearerToken;
     }
 
+    // Use usedId to allow only to give access for the specific client only
+    // Eg. /tasks/create/{userId}
     public static async Task<bool> Authorized(HttpContext context, int? userId = null) {
         try {
             // Check if session token is provided in request header
@@ -79,17 +81,22 @@ public static class SessionManager {
             if (ex is InvalidOperationException || ex is ArgumentNullException) {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await context.Response.WriteAsync("Invalid token");
-            } else if (ex is ArgumentException) {
+                return false;
+            }
+            if (ex is ArgumentException) {
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 await context.Response.WriteAsync("Bearer token not found");
-            } else if (ex is TimeoutException) {
+                return false;
+            }
+            if (ex is TimeoutException) {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await context.Response.WriteAsync("Token has expired");
-            } else {
-                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                await context.Response.WriteAsync(ex.Message);
+                return false;
             }
 
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsync(ex.Message);
+            
             return false;
         }
     }
