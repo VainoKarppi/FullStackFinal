@@ -73,7 +73,7 @@ internal class Program {
                     if (input == "exit") break;
                     if (input == "addtesttoken") {
                         Guid guid = Guid.NewGuid();
-                        SessionManager.AddSession(999999, guid, true); // Add DEV token with all permissions
+                        SessionManager.AddSession(999999, "DEV", guid, true); // Add DEV token with all permissions
                         Console.WriteLine($"Test Token is: {guid}");
                     }
                 }

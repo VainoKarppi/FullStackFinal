@@ -16,8 +16,14 @@ public static partial class ApiMethods {
             return;
         }
 
-        //TODO Check if user is already logged in!
-
+        // Check if username is already used in tokens. Else check from DB
+        Guid? sessionToken = SessionManager.GetGuidByUsername(username);
+        if (sessionToken is not null) {
+            SessionManager.UpdateSession((Guid)sessionToken);
+            context.Response.StatusCode = StatusCodes.Status208AlreadyReported;
+            await context.Response.WriteAsync("Already logged in");
+            return;
+        }
 
         // Get user from Database if exsists. Returns null if not found!
         User? user = await Database.GetUserAsync(username, password);
@@ -28,12 +34,10 @@ public static partial class ApiMethods {
             return;
         }
 
-        // Generate and add session token.
-        // Session token can be used up to 30 seconds before needing to renew and rechecking from database!
-        // This way we can lower the amount of user authorization checks
-        var sessionToken = Guid.NewGuid();
-        SessionManager.AddSession((int)user.Id!, sessionToken);
-
+        // Generate new session token.
+        Guid newSessionToken = Guid.NewGuid();
+        SessionManager.AddSession((int)user.Id!, username, newSessionToken);
+    
 
         // Return User in response with Token as parameter
         context.Response.StatusCode = StatusCodes.Status200OK;
@@ -41,7 +45,7 @@ public static partial class ApiMethods {
             user.Id,
             user.Username,
             user.LastLoginUTC,
-            sessionToken,
+            newSessionToken,
             TokenExpirationUTC = DateTime.UtcNow.AddSeconds(SessionManager.Timeout)
         });
 
@@ -144,7 +148,7 @@ public static partial class ApiMethods {
             // Add auto generated session token to session manager.
             // Session token can be used up to 30 seconds before needing to renew and rechecking from database!
             // This way we can lower the amount of user authorization checks from DB
-            SessionManager.AddSession((int)user.Id!, (Guid)user.SessionToken!);
+            SessionManager.AddSession((int)user.Id!, username, (Guid)user.SessionToken!);
 
             // Return User in response with Token as parameter
             context.Response.StatusCode = StatusCodes.Status201Created;

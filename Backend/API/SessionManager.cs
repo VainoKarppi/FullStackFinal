@@ -15,17 +15,35 @@ public static class SessionManager {
 
     // First element in object array is dateTime when token expires.
     // Seconds element in object array is the 
-    private static readonly Dictionary<Guid,(int, DateTime)> Sessions = [];
+    private static readonly Dictionary<Guid,(int, string, DateTime)> Sessions = [];
     private static List<Guid> DevSessions = [Guid.Parse(Program.Configuration.GetValue<string>("DevToken")!)];
-
+    
+    public static Guid? GetGuidByUsername(string username) {
+        try {
+            return Sessions.First(s => s.Value.Item2.Equals(username)).Key;
+        } catch (Exception) {
+            return null;
+        }
+    }
     public static int GetUserIdByGuid(Guid guid) {
         return Sessions[guid].Item1;
     }
-    public static void AddSession(int userId, Guid guid, bool devSession = false) {
-        Sessions.Add(guid,(userId,DateTime.Now));
+    public static void AddSession(int userId, string username, Guid guid, bool devSession = false) {
+        Sessions.Add(guid,(userId,username,DateTime.Now));
         if (devSession) DevSessions.Add(guid);
     }
+    public static bool UpdateSession(Guid guid) {
+        try {
+            // Update session timeout
+            if (!DevSessions.Contains(guid))
+                Sessions[guid] = (Sessions[guid].Item1, Sessions[guid].Item2, DateTime.Now);
 
+            return true;
+        } catch (Exception) {
+            return false;
+        }
+
+    }
     public static bool RemoveSession(Guid guid) {
         if (DevSessions.Contains(guid)) return true; // Dont remove CLI generated tokens
         return Sessions.Remove(guid);
@@ -37,13 +55,13 @@ public static class SessionManager {
 
         // Throws error if not found
         // Get by user id and by token
-        KeyValuePair<Guid,(int,DateTime)> pair = Sessions.First(x => x.Key == sessionGuid);
+        KeyValuePair<Guid,(int,string,DateTime)> pair = Sessions.First(x => x.Key == sessionGuid);
 
         // Make sure user requester ID matches
         if (userId is not null && pair.Value.Item1 != userId) throw new InvalidUserIdException();
 
         // Check session timer. Returns true if SESSION IS VALID
-        if (DateTime.Now > pair.Value.Item2.AddSeconds(Timeout))  {
+        if (DateTime.Now > pair.Value.Item3.AddSeconds(Timeout))  {
             // Remove from session storage
             RemoveSession(sessionGuid);
             throw new TokenExpiredException(); // Token has expired!
@@ -71,9 +89,7 @@ public static class SessionManager {
             // Make sure bearer token is in use! (List of active tokens for active users)
             ValidateSessionToken(sessionGuid, userId);
 
-            // Update session timeout
-            if (!DevSessions.Contains(sessionGuid))
-                Sessions[sessionGuid] = (Sessions[sessionGuid].Item1, DateTime.Now);
+            UpdateSession(sessionGuid);
 
             return true;
         } catch (Exception ex) {
