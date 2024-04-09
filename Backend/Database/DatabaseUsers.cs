@@ -26,7 +26,7 @@ public static partial class Database {
 
 
             // Get data for User From database using username and password hash
-            string query = "SELECT id,username,last_login_time_utc FROM users WHERE username=@username AND password_hash=@password_hash";
+            string query = "SELECT user_id,username,last_login_time_utc FROM users WHERE username=@username AND password_hash=@password_hash";
             using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
             cmd.Parameters.AddWithValue("@username", username);
@@ -49,7 +49,7 @@ public static partial class Database {
 
             // Return actual user
             return user;
-        } catch (Exception ex) {
+        } catch (Exception) {
             return null;
         }
     }

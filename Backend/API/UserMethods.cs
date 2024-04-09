@@ -46,6 +46,8 @@ public static partial class ApiMethods {
 
         // Update LastLogin Data. Fire and Forget
         user.LastLoginUTC = DateTime.UtcNow;
+        user.Password = null; // Dont update password
+        user.Username = null; // Dont update username
         await Database.UpdateUserAsync(user,true);
     }
     public static async Task Logout(HttpContext context) {
