@@ -21,7 +21,11 @@ public static partial class ApiMethods {
         if (sessionToken is not null) {
             SessionManager.UpdateSession((Guid)sessionToken);
             context.Response.StatusCode = StatusCodes.Status208AlreadyReported;
-            await context.Response.WriteAsync("Already logged in");
+            await context.Response.WriteAsJsonAsync(new {
+                Message = "Already logged in",
+                sessionToken,
+                TokenExpirationUTC = DateTime.UtcNow.AddSeconds(SessionManager.Timeout)
+            });
             return;
         }
 
@@ -82,7 +86,7 @@ public static partial class ApiMethods {
             int userId = SessionManager.GetUserIdByGuid(token);
 
             // Remove user from Database
-            await Database.RemoveUserAsync(userId);
+            await Database.DeleteUserAsync(userId);
 
             // Remove token from sessions
             SessionManager.RemoveSession(token);

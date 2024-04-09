@@ -2,6 +2,7 @@
 
 
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace Backend;
 
@@ -38,6 +39,57 @@ public static partial class ApiMethods {
             await context.Response.WriteAsJsonAsync(task);
 
             if (Program.DEBUG) Console.WriteLine($"Added task for UserId: {task.OwnerId} - ({task.Name})");
+        } catch (Exception ex) {
+            // Return error to client
+            if (Program.DEBUG) Console.WriteLine(ex);
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsync(ex.Message);
+        }
+    }
+
+    public static async Task DeleteTask(HttpContext context, int taskId) {
+        try {
+            // Check authentication. Returns error code automatically, if not authenticated
+            if (!await SessionManager.Authorized(context)) return;
+
+            int userId = SessionManager.GetUserIdByGuid(SessionManager.GetTokenFromHeader(context.Request.Headers));
+
+            // Delete task from DB
+            await Database.DeleteTaskAsync(userId, taskId);
+
+            context.Response.StatusCode = StatusCodes.Status200OK;
+            if (Program.DEBUG) Console.WriteLine($"User:{userId} removed task:{taskId}");
+        } catch (Exception ex) {
+            // Return error to client
+            if (Program.DEBUG) Console.WriteLine(ex);
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsync(ex.Message);
+        }
+    }
+
+    public static async Task UpdateTask(HttpContext context, int taskId) {
+        try {
+            // Check authentication. Returns error code automatically, if not authenticated
+            if (!await SessionManager.Authorized(context)) return;
+
+            int userId = SessionManager.GetUserIdByGuid(SessionManager.GetTokenFromHeader(context.Request.Headers));
+
+            TodoTask? task = await context.Request.ReadFromJsonAsync<TodoTask>();
+            if(task is null) {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await context.Response.WriteAsync("Unable to parse data from body");
+                return;
+            }
+
+            task.Id = taskId;
+            task.OwnerId = userId;
+
+
+            // Update task in DB
+            await Database.UpdateTaskAsync(task);
+
+            context.Response.StatusCode = StatusCodes.Status200OK;
+            if (Program.DEBUG) Console.WriteLine($"User:{userId} updated task:{taskId}");
         } catch (Exception ex) {
             // Return error to client
             if (Program.DEBUG) Console.WriteLine(ex);

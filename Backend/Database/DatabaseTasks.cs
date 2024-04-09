@@ -39,6 +39,18 @@ public static partial class Database {
         return tasks;
     }
 
+    public static async Task DeleteTaskAsync(int userId, int taskId) {
+        string query = "DELETE FROM tasks WHERE owner_id=@owner_id AND task_id=@task_id";
+        using MySqlCommand cmd = new MySqlCommand(query, Connection);
+
+        cmd.Parameters.AddWithValue("@owner_id", userId);
+        cmd.Parameters.AddWithValue("@task_id",taskId);
+
+        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+        if (rowsAffected == 0) throw new Exception($"Unable to remove task! USER:{userId},  TASK:{taskId}");
+
+        Log($"Removed task ID:{taskId}", LogCodes.TaskRemoved, userId);
+    }
     public static async Task<TodoTask?> GetTaskAsync(int userId, int taskId) {
         string query = "SELECT * FROM tasks WHERE owner_id=@owner_id AND task_id=@task_id";
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
@@ -68,7 +80,29 @@ public static partial class Database {
         return null;
     }
 
+    public static async Task UpdateTaskAsync(TodoTask task) {
+        // Update values only if not null
+        string query = "UPDATE tasks SET" ;
+        if (task.Name is not null) query += " name=@name";
+        if (task.Description is not null) query += ", description=@description";
+        if (task.Status is not null) query += ", status=@status";
+        if (task.EndDateUTC is not null) query += ", end_date_utc=@end_date_utc";
+        query += " WHERE task_id=@task_id";
 
+        using MySqlCommand cmd = new MySqlCommand(query, Connection);
+
+        cmd.Parameters.AddWithValue("@task_id", task.Id);
+        cmd.Parameters.AddWithValue("@name", task.Name);
+        cmd.Parameters.AddWithValue("@description", task.Description);
+        cmd.Parameters.AddWithValue("@end_date_utc", task.EndDateUTC);
+        cmd.Parameters.AddWithValue("@status", task.Status);
+
+
+        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+        if (rowsAffected != 1) throw new Exception($"Unable to update task! {task.Id}");
+    
+        Log($"Updated task. Name:{task.Name != null}, Description:{task.Description != null}, End:{task.EndDateUTC != null}", LogCodes.TaskUpdated, task.OwnerId);
+    }
     public static async Task<int> CreateTaskAsync(TodoTask task) {
 
         string query = @"INSERT INTO tasks (owner_id, name, description, start_date_utc, status)

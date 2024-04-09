@@ -83,7 +83,7 @@ public static partial class Database {
         // Return ID
         return id;
     }
-    public static async Task RemoveUserAsync(int userId) {
+    public static async Task DeleteUserAsync(int userId) {
         string query = "UPDATE users SET active=0 WHERE user_id=@user_id";
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
@@ -118,9 +118,9 @@ public static partial class Database {
 
         // Update values only if not null
         string query = "UPDATE users SET" ;
-        if (user.Username is not null) query += " username=@username,";
-        if (user.Password is not null) query += " password_hash=@password_hash,";
-        if (user.LastLoginUTC is not null) query += " last_login_time_utc=@last_login_time_utc";
+        if (user.Username is not null) query += " username=@username";
+        if (user.Password is not null) query += ", password_hash=@password_hash";
+        if (user.LastLoginUTC is not null) query += ", last_login_time_utc=@last_login_time_utc";
         query += " WHERE user_id=@user_id";
 
         using MySqlCommand cmd = new MySqlCommand(query, Connection);

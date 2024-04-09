@@ -18,10 +18,10 @@ public class TodoTask() {
     }
 
     public int Id { get; set; }
-    public required int? OwnerId { get; set; }
-    public required string? Name { get; set; }
+    public int? OwnerId { get; set; }
+    public string? Name { get; set; }
     public string? Description { get; set; }
-    public required DateTime StartDateUTC { get; set; }
+    public DateTime? StartDateUTC { get; set; }
     public DateTime? EndDateUTC { get; set; }
     public string[]? Tags { get; set; }
     public TaskStatus? Status { get; set; }
