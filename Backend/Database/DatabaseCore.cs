@@ -80,7 +80,8 @@ public static partial class Database {
             username VARCHAR(64) NOT NULL,
             password_hash VARCHAR(64) NOT NULL,
             salt INT NOT NULL,
-            last_login_time_utc TIMESTAMP NULL DEFAULT NULL
+            last_login_time_utc TIMESTAMP NULL DEFAULT NULL,
+            active TINYINT(1) NOT NULL DEFAULT 1
         )", Connection);
         tablesCreated += users.ExecuteNonQuery();
 

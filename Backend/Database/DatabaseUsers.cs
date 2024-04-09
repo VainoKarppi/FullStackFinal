@@ -26,7 +26,7 @@ public static partial class Database {
 
 
             // Get data for User From database using username and password hash
-            string query = "SELECT user_id,username,last_login_time_utc FROM users WHERE username=@username AND password_hash=@password_hash";
+            string query = "SELECT user_id,username,last_login_time_utc FROM users WHERE active=1 AND username=@username AND password_hash=@password_hash";
             using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
             cmd.Parameters.AddWithValue("@username", username);
@@ -84,12 +84,12 @@ public static partial class Database {
         return id;
     }
     public static async Task RemoveUserAsync(int userId) {
-        string query = "DELETE FROM users WHERE user_id=@user_id";
+        string query = "UPDATE users SET active=0 WHERE user_id=@user_id";
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
         cmd.Parameters.AddWithValue("@user_id", userId);
         int rowsAffected = await cmd.ExecuteNonQueryAsync();
-        if (rowsAffected != 1) throw new Exception($"Unable to remove user! {userId}");
+        if (rowsAffected != 1) throw new Exception($"Unable to mark user as removed! {userId}");
 
         Log($"Removed user", LogCodes.UserRemoved, userId);
     }

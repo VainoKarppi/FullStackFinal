@@ -16,6 +16,9 @@ public static partial class ApiMethods {
             return;
         }
 
+        //TODO Check if user is already logged in!
+
+
         // Get user from Database if exsists. Returns null if not found!
         User? user = await Database.GetUserAsync(username, password);
 
