@@ -5,8 +5,10 @@ namespace Backend;
 
 
 public static partial class Database {
-    public static void Log(string message, LogCodes code, int? userId = null) {
+    public static async void Log(string message, LogCodes code, int? userId = null) {
         try {
+            await Task.CompletedTask;
+            
             // Add userId to query if exists and not null is used
             string query = "INSERT INTO logs (message,timestamp,code";
             if (userId is not null) query += ",user_id";
