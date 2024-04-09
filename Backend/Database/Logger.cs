@@ -22,7 +22,7 @@ public static partial class Database {
             if(userId is not null) cmd.Parameters.AddWithValue("@user_id", userId);
             
             // Dont wait for response, to continue faster
-            _ = Task.Run(cmd.ExecuteNonQueryAsync);
+            _ = cmd.ExecuteNonQueryAsync();
         } catch (Exception) {}
     }
 }

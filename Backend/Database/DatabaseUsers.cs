@@ -132,7 +132,7 @@ public static partial class Database {
         cmd.Parameters.AddWithValue("@user_id", user.Id);
         
         if (fireAndForget) {
-            _ = Task.Run(cmd.ExecuteNonQueryAsync);
+            _ = cmd.ExecuteNonQueryAsync();
         } else {
             int rowsAffected = await cmd.ExecuteNonQueryAsync();
             if (rowsAffected != 1) throw new Exception($"Unable to update user! {user.Id}");
