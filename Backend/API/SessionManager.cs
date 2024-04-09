@@ -40,13 +40,13 @@ public static class SessionManager {
         KeyValuePair<Guid,(int,DateTime)> pair = Sessions.First(x => x.Key == sessionGuid);
 
         // Make sure user requester ID matches
-        if (userId is not null && pair.Value.Item1 != userId) throw new ArgumentNullException();
+        if (userId is not null && pair.Value.Item1 != userId) throw new InvalidUserIdException();
 
         // Check session timer. Returns true if SESSION IS VALID
         if (DateTime.Now > pair.Value.Item2.AddSeconds(Timeout))  {
             // Remove from session storage
             RemoveSession(sessionGuid);
-            throw new TimeoutException(); // Token has expired!
+            throw new TokenExpiredException(); // Token has expired!
         }
     }
 
@@ -54,7 +54,7 @@ public static class SessionManager {
         headers.TryGetValue("Authorization", out var sessionToken);
 
         string? bearerToken = sessionToken.ToString().Substring("Bearer ".Length).Trim();
-        if (string.IsNullOrEmpty(bearerToken)) throw new ArgumentException("No Bearer token found for header!");
+        if (string.IsNullOrEmpty(bearerToken)) throw new TokenNotFoundException();
 
         return bearerToken;
     }
@@ -67,7 +67,7 @@ public static class SessionManager {
             string bearerToken = GetTokenFromHeader(context.Request.Headers);
             
             Guid sessionGuid = Guid.Parse(bearerToken);
-
+            
             // Make sure bearer token is in use! (List of active tokens for active users)
             ValidateSessionToken(sessionGuid, userId);
 
@@ -78,17 +78,22 @@ public static class SessionManager {
             return true;
         } catch (Exception ex) {
             // Write response Exceptions
+            if (ex is InvalidUserIdException) {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsync("Invalid userId");
+                return false;
+            }
             if (ex is InvalidOperationException || ex is ArgumentNullException) {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await context.Response.WriteAsync("Invalid token");
                 return false;
             }
-            if (ex is ArgumentException) {
+            if (ex is TokenNotFoundException) {
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 await context.Response.WriteAsync("Bearer token not found");
                 return false;
             }
-            if (ex is TimeoutException) {
+            if (ex is TokenExpiredException) {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await context.Response.WriteAsync("Token has expired");
                 return false;
