@@ -67,24 +67,25 @@ public static class SessionManager {
             throw new TokenExpiredException(); // Token has expired!
         }
     }
-
-    public static string GetTokenFromHeader(IHeaderDictionary headers) {
+    
+    public static Guid GetTokenFromHeader(IHeaderDictionary headers) {
         headers.TryGetValue("Authorization", out var sessionToken);
 
         string? bearerToken = sessionToken.ToString().Substring("Bearer ".Length).Trim();
         if (string.IsNullOrEmpty(bearerToken)) throw new TokenNotFoundException();
 
-        return bearerToken;
+        return Guid.Parse(bearerToken);
     }
 
     // Use usedId to allow only to give access for the specific client only
     // Eg. /tasks/create/{userId}
-    public static async Task<bool> Authorized(HttpContext context, int? userId = null) {
+    public static async Task<bool> Authorized(HttpContext context) {
         try {
             // Check if session token is provided in request header
-            string bearerToken = GetTokenFromHeader(context.Request.Headers);
-            
-            Guid sessionGuid = Guid.Parse(bearerToken);
+            Guid sessionGuid = GetTokenFromHeader(context.Request.Headers);
+
+            // Get userId
+            int userId = GetUserIdByGuid(sessionGuid);
             
             // Make sure bearer token is in use! (List of active tokens for active users)
             ValidateSessionToken(sessionGuid, userId);
@@ -99,7 +100,7 @@ public static class SessionManager {
                 await context.Response.WriteAsync("Invalid userId");
                 return false;
             }
-            if (ex is InvalidOperationException || ex is ArgumentNullException) {
+            if (ex is InvalidOperationException || ex is ArgumentNullException || ex is KeyNotFoundException) {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await context.Response.WriteAsync("Invalid token");
                 return false;

@@ -6,10 +6,12 @@ using System.Diagnostics;
 namespace Backend;
 
 public static partial class ApiMethods {
-    public static async Task CreateTask(HttpContext context, int userId) {
+    public static async Task CreateTask(HttpContext context) {
         try {
             // Check authentication. Returns error code automatically, if not authenticated
-            if (!await SessionManager.Authorized(context, userId)) return;
+            if (!await SessionManager.Authorized(context)) return;
+
+            int userId = SessionManager.GetUserIdByGuid(SessionManager.GetTokenFromHeader(context.Request.Headers));
 
             // Make sure new task name exists
             string? taskName = context.Request.Form["name"];
@@ -46,7 +48,7 @@ public static partial class ApiMethods {
 
     public static async Task GetTasks(HttpContext context, int userId, string? filter, int lastTaskId = 0) {
         try {
-            if (!await SessionManager.Authorized(context, userId)) return;
+            if (!await SessionManager.Authorized(context)) return;
             
             // Get tasks from DB with parameters: filter, lastTaskId
             // LastTaskId can be used to fetch next 10 available tasks, since the limit is set to 10 tasks only per fetch
@@ -61,10 +63,13 @@ public static partial class ApiMethods {
             await context.Response.WriteAsync(ex.Message);
         }    
     }
-    public static async Task GetTask(HttpContext context, int userId, int taskId = 0) {
+    public static async Task GetTask(HttpContext context, int taskId = 0) {
         try {
-            if (!await SessionManager.Authorized(context, userId)) return;
+            if (!await SessionManager.Authorized(context)) return;
             
+            // Get useId from SessionManager
+            int userId = SessionManager.GetUserIdByGuid(SessionManager.GetTokenFromHeader(context.Request.Headers));
+
             // Get single task from DB
             TodoTask? task = await Database.GetTaskAsync(userId, taskId);
 

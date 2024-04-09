@@ -10,6 +10,7 @@ public enum LogCodes {
     TaskRemoved,
 }
 public class TodoTask() {
+    
     public enum TaskStatus {
         InProgress,
         Done,

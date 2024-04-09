@@ -37,9 +37,9 @@ internal class Program {
             app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 
             // Add Methods
-            app.MapPost("/tasks/{userId}/create", ApiMethods.CreateTask);
-            app.MapGet("/tasks/{userId}", ApiMethods.GetTasks);
-            app.MapGet("/tasks/{userId}/{taskId}", ApiMethods.GetTask);
+            app.MapPost("/tasks/create", ApiMethods.CreateTask);
+            app.MapGet("/tasks", ApiMethods.GetTasks);
+            app.MapGet("/tasks/{taskId}", ApiMethods.GetTask);
             app.MapPost("/register", ApiMethods.Register);
             app.MapPost("/login", ApiMethods.Login);
             app.MapPost("/logout", ApiMethods.Logout);

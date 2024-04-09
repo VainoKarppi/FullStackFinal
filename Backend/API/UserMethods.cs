@@ -62,10 +62,9 @@ public static partial class ApiMethods {
             if (!await SessionManager.Authorized(context)) return;
 
             // Remove session token from sessions
-            string bearerToken = SessionManager.GetTokenFromHeader(context.Request.Headers);
-            SessionManager.RemoveSession(Guid.Parse(bearerToken));
+            Guid token = SessionManager.GetTokenFromHeader(context.Request.Headers);
 
-            if (Program.DEBUG) Console.WriteLine($"User Logged out! {bearerToken}");
+            if (Program.DEBUG) Console.WriteLine($"User Logged out! {token}");
             // Let frontend handle the auto page forwarding
             context.Response.StatusCode = StatusCodes.Status204NoContent;
         } catch (Exception ex) {
@@ -77,8 +76,7 @@ public static partial class ApiMethods {
         try {
             if (!await SessionManager.Authorized(context)) return;
 
-            string bearerToken = SessionManager.GetTokenFromHeader(context.Request.Headers);
-            Guid token = Guid.Parse(bearerToken);
+            Guid token = SessionManager.GetTokenFromHeader(context.Request.Headers);
 
             // Get user ID from sessions list
             int userId = SessionManager.GetUserIdByGuid(token);
@@ -99,7 +97,7 @@ public static partial class ApiMethods {
     }
     public static async Task UpdateUser(HttpContext context, int userId) {
         try {
-            if (!await SessionManager.Authorized(context, userId)) return;
+            if (!await SessionManager.Authorized(context)) return;
 
             string? username = context.Request.Form["username"];
             string? password = context.Request.Form["password"];
