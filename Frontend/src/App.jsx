@@ -4,9 +4,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import './App.css'
 
 import Layout from "./pages/Layout";
+// User UI
 import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Logout from "./pages/Logout";
+
+// Tasks UI
+import Tasks from "./pages/Tasks";
+
 import NoPage from "./pages/NoPage";
 
 function App() {
@@ -20,6 +25,7 @@ function App() {
             <Route index element={<Home />} />
             <Route path="register" element={<Register />} />
             <Route path="logout" element={<Logout />} />
+            <Route path="tasks" element={<Tasks />} />
             <Route path="*" element={<NoPage />} />
           </Route>
         </Routes>
