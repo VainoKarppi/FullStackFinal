@@ -1,65 +1,52 @@
 
 import React, { useState } from 'react';
 import { Container, Form, Button } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import API_ROOT from '../config';
+
+
+const token = sessionStorage.getItem("sessionToken");
 
 const Home = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [showSuccess, setShowSuccess] = useState(false);
-    const navigate  = useNavigate();
+    const [errorMessage, setShowError] = useState(null);
+    const navigate = useNavigate();
 
-    const handleRegister = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         const formData = new FormData();
         formData.append('username', username);
         formData.append('password', password);
 
-        fetch(`${API_ROOT}/register`, {
-            method: 'POST',
-            body: formData,
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log(data);
-            const sessionToken = data.sessionToken;
-            console.log('Session token:', sessionToken);
-
-            setShowSuccess(true);
-
-            // Add token to SessionStorage, so we can use it later for requesting data
-            sessionStorage.setItem("sessionToken", sessionToken);
-
-            setTimeout(() => {
-                navigate('/tasks'); // Redirect to /tasks after 2 seconds
-            }, 2000); // 2 seconds
-        })
-        .catch((error) => console.error('Error:', error));
-
-        // Handle subscription logic (e.g., send email to server)
-        // For now, let's just show a success message.
-        // TODO call rest api register and wait for status 201
-        // Send password as SHA256
-        // TODO Forward to login page after 2 seconds
+        try {
+            const response = await fetch(`${API_ROOT}/login`, {
+                method: 'POST',
+                body: formData,
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Login successful:', data);
+                
+                const sessionToken = data.sessionToken;
+                console.log('Session token:', sessionToken);
+                
+                sessionStorage.setItem("sessionToken", sessionToken);
+                sessionStorage.setItem("tokenExpirationUTC",data.tokenExpirationUTC);
+                navigate('/tasks');
+            } else {
+                const errorMessage = await response.text();
+                console.error('Registration failed:', errorMessage);
+                setShowError(errorMessage);
+            }
+        } catch (error) {
+            console.error('Error:', error.message);
+        }
     };
     return (
         <Container style={{ marginTop: '50px' }}>
-            <div className="card">
-                <div className="card-header">
-                    Welcome
-                </div>
-                <div className="card-body">
-                    <blockquote className="blockquote mb-0">
-                    <h3>Home Page</h3>
-                    <p>This is the home page</p>
-                    </blockquote>
-                </div>
-            </div>
-
-            <br/>
-
-            <Form onSubmit={handleRegister}>
+            <Form onSubmit={handleLogin}>
                 <Form.Group controlId="formUsername">
                     <Form.Label>Username</Form.Label>
                     <Form.Control
@@ -77,24 +64,23 @@ const Home = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     />
-                    <Form.Text className="text-muted">
-                    Passwords are hashed using SHA256
-                    </Form.Text>
                 </Form.Group>
                 <Button variant="primary" type="submit">
-                    Register
+                    Login
                 </Button>
-
-                <br/><br/>
-
-                {showSuccess && (
-                    <div className="alert alert-success">
-                        <strong>Success!</strong> Registerd with username: {username}
-                        <br></br>
-                        <ul>Forwarding to tasks page...</ul>
-                    </div>
-                )}
             </Form>
+            <br></br>
+            <Link to="/register">
+                <Button variant='primary'>Register</Button>
+            </Link>
+
+            {errorMessage != null && (
+                <div className="alert alert-danger">
+                    <strong>Error!</strong>
+                    <br></br>
+                    {errorMessage}
+                </div>
+            )}
         </Container>
         
     );
