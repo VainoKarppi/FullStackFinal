@@ -5,8 +5,6 @@ import './App.css'
 
 import Layout from "./pages/Layout";
 import Home from "./pages/Home";
-import Blogs from "./pages/Blogs";
-import Contact from "./pages/Contact";
 import Register from "./pages/Register";
 import Logout from "./pages/Logout";
 import NoPage from "./pages/NoPage";
@@ -20,10 +18,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
-            <Route path="blogs" element={<Blogs />} />
             <Route path="register" element={<Register />} />
             <Route path="logout" element={<Logout />} />
-            <Route path="contact" element={<Contact />} />
             <Route path="*" element={<NoPage />} />
           </Route>
         </Routes>

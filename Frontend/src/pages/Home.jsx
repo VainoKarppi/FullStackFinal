@@ -1,17 +1,30 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Form, Button } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
 import API_ROOT from '../config';
 
 
-const token = sessionStorage.getItem("sessionToken");
+
 
 const Home = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setShowError] = useState(null);
     const navigate = useNavigate();
+    
+    const token = sessionStorage.getItem("sessionToken");
+
+    useEffect(() => {
+        async function tasks() {
+            const sessionTokenExpiresUTC = new Date(sessionStorage.getItem("tokenExpirationUTC"));
+
+            // If session is still valid, and user is logged in -> forward to tasks
+            if (token && sessionTokenExpiresUTC > new Date()) navigate('/tasks');
+        }
+        tasks();
+    }, []);
+
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -46,6 +59,7 @@ const Home = () => {
     };
     return (
         <Container style={{ marginTop: '50px' }}>
+            <h1>Login</h1>
             <Form onSubmit={handleLogin}>
                 <Form.Group controlId="formUsername">
                     <Form.Label>Username</Form.Label>
@@ -65,11 +79,13 @@ const Home = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     />
                 </Form.Group>
+                <br></br>
                 <Button variant="primary" type="submit">
                     Login
                 </Button>
             </Form>
             <br></br>
+            <p>If you don't already have account. Register from here:</p>
             <Link to="/register">
                 <Button variant='primary'>Register</Button>
             </Link>

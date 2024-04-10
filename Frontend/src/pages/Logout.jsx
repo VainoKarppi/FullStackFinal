@@ -7,7 +7,11 @@ const token = sessionStorage.getItem("sessionToken");
 const Logout = () => {
     const navigate = useNavigate();
 
+    var firstRun = true;
     useEffect(() => {
+        if (!firstRun) return; // Make sure we dont fire this useEffect twice
+        firstRun = false;
+
         async function logout() {
             if (!token) return;
             
@@ -23,10 +27,10 @@ const Logout = () => {
                 sessionStorage.clear("sessionToken");
                 sessionStorage.clear("tokenExpirationUTC");
             }
+            navigate('/');
         }
         logout();
-        navigate('/');
-    }, []); // Empty dependency array ensures useEffect runs only once
+    }, []);
 
     return (
         <div>

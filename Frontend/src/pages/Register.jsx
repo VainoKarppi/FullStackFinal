@@ -53,7 +53,6 @@ const Register = () => {
     return (
         <Container style={{ marginTop: '50px' }}>
             <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', margin:"20px"}}>
-
                 <Form onSubmit={handleRegister}>
                     <Form.Group controlId="formUsername">
                         <Form.Label>Username</Form.Label>
