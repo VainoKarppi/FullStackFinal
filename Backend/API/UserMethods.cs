@@ -49,7 +49,7 @@ public static partial class ApiMethods {
             user.Id,
             user.Username,
             user.LastLoginUTC,
-            newSessionToken,
+            sessionToken = newSessionToken,
             TokenExpirationUTC = DateTime.UtcNow.AddSeconds(SessionManager.Timeout)
         });
 
@@ -67,6 +67,7 @@ public static partial class ApiMethods {
 
             // Remove session token from sessions
             Guid token = SessionManager.GetTokenFromHeader(context.Request.Headers);
+            SessionManager.RemoveSession(token);
 
             if (Program.DEBUG) Console.WriteLine($"User Logged out! {token}");
             // Let frontend handle the auto page forwarding
@@ -141,6 +142,17 @@ public static partial class ApiMethods {
                 return;
             }
 
+            // Check if username and passwords are long enough
+            if (username.Length < 5) {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await context.Response.WriteAsync("Username too short! (Must be at least 5 characters)");
+                return;
+            }
+            if (password.Length < 8) {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await context.Response.WriteAsync("Password too short! (Must be at least 8 characters)");
+                return;
+            }
 
             // Create User To Database
             var user = new User(username, password);

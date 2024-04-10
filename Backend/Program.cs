@@ -64,11 +64,12 @@ internal class Program {
             // Run server on background so we can continue by using CLI
             _ = Task.Run(() => app.Run());
 
+            Console.Beep();
+
             await Task.Delay(1000);
             Console.WriteLine("STARTED API SERVER");
 
             new Thread(() => {
-                Console.Beep();
                 Console.WriteLine("\n\n");
                 while (true) {
                     string? input = Console.ReadLine()!.ToLower().Trim();;

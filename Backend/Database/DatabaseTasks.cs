@@ -101,7 +101,7 @@ public static partial class Database {
         int rowsAffected = await cmd.ExecuteNonQueryAsync();
         if (rowsAffected != 1) throw new Exception($"Unable to update task! {task.Id}");
     
-        Log($"Updated task. Name:{task.Name != null}, Description:{task.Description != null}, End:{task.EndDateUTC != null}", LogCodes.TaskUpdated, task.OwnerId);
+        Log($"Updated task. Name:{task.Name != null}, Description:{task.Description != null}, EndTime:{task.EndDateUTC != null}", LogCodes.TaskUpdated, task.OwnerId);
     }
     public static async Task<int> CreateTaskAsync(TodoTask task) {
 
