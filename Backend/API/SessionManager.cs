@@ -79,6 +79,7 @@ public static class SessionManager {
 
     // Use usedId to allow only to give access for the specific client only
     // Eg. /tasks/create/{userId}
+    // This will also automatically extend the session time
     public static async Task<bool> Authorized(HttpContext context) {
         try {
             // Check if session token is provided in request header

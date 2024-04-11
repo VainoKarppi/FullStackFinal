@@ -75,7 +75,7 @@ public static partial class ApiMethods {
             int userId = SessionManager.GetUserIdByGuid(SessionManager.GetTokenFromHeader(context.Request.Headers));
 
             TodoTask? task = await context.Request.ReadFromJsonAsync<TodoTask>();
-            if(task is null) {
+            if (task is null) {
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 await context.Response.WriteAsync("Unable to parse data from body");
                 return;

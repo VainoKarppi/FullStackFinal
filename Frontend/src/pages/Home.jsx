@@ -50,11 +50,16 @@ const Home = () => {
                 navigate('/tasks');
             } else {
                 const errorMessage = await response.text();
-                console.error('Registration failed:', errorMessage);
+                console.error('Login failed:', errorMessage);
                 setShowError(errorMessage);
             }
         } catch (error) {
             console.error('Error:', error.message);
+            if (error.message === 'Failed to fetch') {
+                setShowError('Unable to contact API server');
+            } else {
+                setShowError(error)
+            }
         }
     };
     return (
@@ -85,11 +90,6 @@ const Home = () => {
                 </Button>
             </Form>
             <br></br>
-            <p>If you don't already have account. Register from here:</p>
-            <Link to="/register">
-                <Button variant='primary'>Register</Button>
-            </Link>
-
             {errorMessage != null && (
                 <div className="alert alert-danger">
                     <strong>Error!</strong>
@@ -97,6 +97,11 @@ const Home = () => {
                     {errorMessage}
                 </div>
             )}
+            <br></br>
+            <p>If you don't already have account. Register from here:</p>
+            <Link to="/register">
+                <Button variant='primary'>Register</Button>
+            </Link>
         </Container>
         
     );

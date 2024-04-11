@@ -8,6 +8,7 @@ import Layout from "./pages/Layout";
 import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Logout from "./pages/Logout";
+import Account from './pages/Account';
 
 // Tasks UI
 import Tasks from "./pages/Tasks";
@@ -26,6 +27,7 @@ function App() {
             <Route path="register" element={<Register />} />
             <Route path="logout" element={<Logout />} />
             <Route path="tasks" element={<Tasks />} />
+            <Route path="account" element={<Account />} />
             <Route path="*" element={<NoPage />} />
           </Route>
         </Routes>

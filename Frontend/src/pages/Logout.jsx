@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API_ROOT from '../config';
 
-const token = sessionStorage.getItem("sessionToken");
+
 
 const Logout = () => {
     const navigate = useNavigate();
@@ -13,7 +13,13 @@ const Logout = () => {
         firstRun = false;
 
         async function logout() {
-            if (!token) return;
+            
+            const token = sessionStorage.getItem("sessionToken");
+
+            if (!token) {
+                navigate('/');
+                return;
+            };
             
             const response = await fetch(`${API_ROOT}/logout`, {
                 method: 'POST',

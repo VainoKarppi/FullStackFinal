@@ -1,48 +1,48 @@
 
 import React, { useState } from 'react';
 import { Container, Form, Button } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
 import API_ROOT from '../config';
 
 
-const Register = () => {
+
+const Account = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showSuccess, setShowSuccess] = useState(false);
     const [errorMessage, setShowError] = useState(null);
-    const navigate = useNavigate();
 
 
-    const handleRegister = async (e) => {
+    const handleUpdate = async (e) => {
         e.preventDefault();
-        const formData = new FormData();
-        formData.append('username', username);
-        formData.append('password', password);
         
         try {
-            const response = await fetch(`${API_ROOT}/register`, {
-                method: 'POST',
-                body: formData,
+            const token = sessionStorage.getItem("sessionToken");
+
+            if (!token) {
+                navigate('/');
+                return;
+            };
+
+            var updatedAccount = {};
+            if (username.trim() !== '') updatedAccount.username = username;
+            if (password.trim() !== '') updatedAccount.password = password;
+            
+
+            const response = await fetch(`${API_ROOT}/user/update`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(updatedAccount)
             });
             
             if (response.ok) {
-                const data = await response.json();
-                console.log('Registration successful:', data);
-                
-                const sessionToken = data.sessionToken;
-                console.log('Session token:', sessionToken);
-                
-                setShowSuccess(true);
-                sessionStorage.setItem("sessionToken", sessionToken);
-                sessionStorage.setItem("tokenExpirationUTC",data.tokenExpirationUTC);
-                
-                setTimeout(() => {
-                    navigate('/tasks'); // Redirect to /tasks after 2 seconds
-                }, 2000); // 2 seconds
+                setShowSuccess(true);     
             } else {
                 setShowSuccess(false);
                 const errorMessage = await response.text();
-                console.error('Registration failed:', errorMessage);
+                console.error('Update failed:', errorMessage);
                 setShowError(errorMessage);
             }
         } catch (error) {
@@ -52,12 +52,12 @@ const Register = () => {
     return (
         <Container style={{ marginTop: '50px' }}>
             <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', margin:"20px"}}>
-                <Form onSubmit={handleRegister}>
+                <Form onSubmit={handleUpdate}>
                     <Form.Group controlId="formUsername">
                         <Form.Label>Username</Form.Label>
                         <Form.Control
                         type="text"
-                        placeholder="Enter username"
+                        placeholder="Enter new username"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         />
@@ -66,17 +66,14 @@ const Register = () => {
                         <Form.Label>Password</Form.Label>
                         <Form.Control
                         type="password"
-                        placeholder="Enter password"
+                        placeholder="Enter new password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         />
-                        <Form.Text className="text-muted">
-                        Passwords are hashed using SHA256
-                        </Form.Text>
                     </Form.Group>
                     <br></br>
                     <Button variant="primary" type="submit">
-                        Register
+                        Update
                     </Button>
 
                     <br/><br/>
@@ -93,9 +90,7 @@ const Register = () => {
             )}
             {showSuccess && (
                 <div className="alert alert-success">
-                    <strong>Registration Success!</strong>
-                    <br></br>
-                    <ul>Forwarding to tasks page...</ul>
+                    <strong>Update Success!</strong>
                 </div>
             )}
         </Container>
@@ -103,4 +98,4 @@ const Register = () => {
     );
 };
   
-export default Register;
+export default Account;

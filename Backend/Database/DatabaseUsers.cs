@@ -3,7 +3,20 @@ using MySqlConnector;
 namespace Backend;
 
 public static partial class Database {
-    private static string GetSalt(string username) {
+    private static string GetSaltById(int userId) {
+        string sql = "SELECT DISTINCT salt FROM users WHERE user_id=@user_id";
+        using var command = new MySqlCommand(sql, Connection);
+        command.Parameters.AddWithValue("@user_id", userId);
+
+        // Read salt
+        string? salt = command.ExecuteScalar()!.ToString();
+
+        if (string.IsNullOrEmpty(salt)) throw new Exception($"Unable to get hash for user: {userId}");
+
+        // Return salt
+        return salt;
+    }
+    private static string GetSaltByUsername(string username) {
         // Get user salt from database
         string sql = "SELECT DISTINCT salt FROM users WHERE username=@username";
         using var command = new MySqlCommand(sql, Connection);
@@ -21,7 +34,7 @@ public static partial class Database {
     public static async Task<User?> GetUserAsync(string username, string password) {
         try {
             // Get User salt and apply this to final password
-            string? salt = GetSalt(username) ?? throw new Exception($"Salt not found for user: {username}");
+            string salt = GetSaltByUsername(username);
             string hashedPassword = HashCalculator.ComputeSHA256Hash(password + salt);
 
 
@@ -118,12 +131,22 @@ public static partial class Database {
 
         // Update values only if not null
         string query = "UPDATE users SET" ;
-        if (user.Username is not null) query += " username=@username";
-        if (user.Password is not null) query += ", password_hash=@password_hash";
-        if (user.LastLoginUTC is not null) query += ", last_login_time_utc=@last_login_time_utc";
+        
+        if (user.Username != null) query += " username=@username";
+        if (user.Username != null && user.Password != null || user.LastLoginUTC != null) query += ",";
+
+        if (user.Password != null) query += " password_hash=@password_hash";
+        if (user.Password != null && user.LastLoginUTC != null) query += ",";
+
+        if (user.LastLoginUTC is not null) query += " last_login_time_utc=@last_login_time_utc";
         query += " WHERE user_id=@user_id";
 
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
+
+        if (user.Password is not null && !HashCalculator.IsSHA256(user.Password)) {
+            string salt = GetSaltById((int)user.Id);
+            user.Password = HashCalculator.ComputeSHA256Hash(user.Password + salt);
+        }
 
         // Update values only if not null
         if (user.Username is not null) cmd.Parameters.AddWithValue("@username", user.Username);

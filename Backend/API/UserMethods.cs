@@ -35,6 +35,7 @@ public static partial class ApiMethods {
         // Check if Unauthorized. Username or password is incorrect
         if (user is null) {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsync("Invalid credientials");
             return;
         }
 
@@ -100,17 +101,25 @@ public static partial class ApiMethods {
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         }
     }
-    public static async Task UpdateUser(HttpContext context, int userId) {
+    public static async Task UpdateUser(HttpContext context) {
         try {
             if (!await SessionManager.Authorized(context)) return;
 
-            string? username = context.Request.Form["username"];
-            string? password = context.Request.Form["password"];
+            int userId = SessionManager.GetUserIdByGuid(SessionManager.GetTokenFromHeader(context.Request.Headers));
 
+            // Read new userdata from body
+            User? userData = await context.Request.ReadFromJsonAsync<User?>();
+            if (userData is null) {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await context.Response.WriteAsync("Unable to parse data from body");
+                return;
+            }
+            
+            // Create new user object which we add the details
             User user = new() {
                 Id = userId,
-                Username = username,
-                Password = password
+                Username = userData.Username,
+                Password = userData.Password
             };
             // Update database user data
             await Database.UpdateUserAsync(user);
@@ -125,6 +134,7 @@ public static partial class ApiMethods {
                 await context.Response.WriteAsync("Username already in use");
                 return;
             }
+            await context.Response.WriteAsync(ex.Message);
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         }
 

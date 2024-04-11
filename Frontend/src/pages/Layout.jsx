@@ -1,8 +1,6 @@
 import { Outlet, Link } from "react-router-dom";
+import { Container, Navbar, Nav, Button } from 'react-bootstrap';
 import React from 'react';
-import Navbar from 'react-bootstrap/Navbar';
-import Nav from 'react-bootstrap/Nav';
-import Container from 'react-bootstrap/Container';
 
 const Layout = () => {
   return (
@@ -13,12 +11,15 @@ const Layout = () => {
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="me-auto">
-              <Nav.Link href="/">Home</Nav.Link>
-              <Nav.Link href="/blogs">Blogs</Nav.Link>
-              <Nav.Link href="/contact">Contact</Nav.Link>
-              <Nav.Link href="/logout">Logout</Nav.Link>
+              <Nav.Link href="/tasks">Tasks</Nav.Link>
+              <Nav.Link href="/statistics">Statistics</Nav.Link> 
+              <Nav.Link href="/account">Account</Nav.Link> 
             </Nav>
           </Navbar.Collapse>
+    
+          {sessionStorage.getItem("sessionToken") !== null ? ( // Add Logout button only, if the user has logged in
+              <Button href="/logout">Logout</Button>
+          ) : null}
         </Container>
       </Navbar>
       <Outlet />
