@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import API_ROOT from '../config';
-
-
+import { logoutUser } from '../Services/userServices';
+import ProtectedLayout from '../Components/ProtectedLayout';
 
 const Logout = () => {
     const navigate = useNavigate();
@@ -13,35 +12,16 @@ const Logout = () => {
         firstRun = false;
 
         async function logout() {
-            
-            const token = sessionStorage.getItem("sessionToken");
-
-            if (!token) {
-                navigate('/');
-                return;
-            };
-            
-            const response = await fetch(`${API_ROOT}/logout`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            
-            if (response.ok) {
-                sessionStorage.clear("sessionToken");
-                sessionStorage.clear("tokenExpirationUTC");
-            }
+            await logoutUser();
             navigate('/');
         }
         logout();
     }, []);
 
     return (
-        <div>
+        <ProtectedLayout>
             <h2>Logging out...</h2>
-        </div>
+        </ProtectedLayout>
     );
 };
 

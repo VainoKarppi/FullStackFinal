@@ -3,14 +3,35 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Backend;
 public static partial class ApiMethods {
+    public static async Task<bool> UpdateSession(HttpContext context, Guid? sessionToken = null) {
+        try {
+            sessionToken ??= SessionManager.GetTokenFromHeader(context.Request.Headers);
+            SessionManager.UpdateSession((Guid)sessionToken);
 
+            // Write update response
+            context.Response.StatusCode = StatusCodes.Status208AlreadyReported;
+            await context.Response.WriteAsJsonAsync(new {
+                Message = "Already logged in",
+                sessionToken,
+                TokenExpirationUTC = DateTime.UtcNow.AddSeconds(SessionManager.Timeout)
+            });
+            return true;
+        } catch (Exception) {
+            return false;
+        }
+    }
     public static async Task Login(HttpContext context) {
         // Read username and password from request
         string? username = context.Request.Form["username"];
         string? password = context.Request.Form["password"];
 
-        // Makme sure username and password exists
+
+        // Make sure username and password exists
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password)) {
+
+            // Check if login is just update SessionTime using header token
+            if (await UpdateSession(context)) return; // Token found, update session
+
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             await context.Response.WriteAsync("Invalid credientials input");
             return;
@@ -19,14 +40,7 @@ public static partial class ApiMethods {
         // Check if username is already used in tokens. Else check from DB
         Guid? sessionToken = SessionManager.GetGuidByUsername(username);
         if (sessionToken is not null) {
-            SessionManager.UpdateSession((Guid)sessionToken);
-            context.Response.StatusCode = StatusCodes.Status208AlreadyReported;
-            await context.Response.WriteAsJsonAsync(new {
-                Message = "Already logged in",
-                sessionToken,
-                TokenExpirationUTC = DateTime.UtcNow.AddSeconds(SessionManager.Timeout)
-            });
-            return;
+            if (await UpdateSession(context, (Guid)sessionToken)) return; // Update session if username found
         }
 
         // Get user from Database if exsists. Returns null if not found!
@@ -115,6 +129,18 @@ public static partial class ApiMethods {
                 return;
             }
             
+            // Check if username and passwords are long enough
+            if (userData.Username != null && userData.Username.Length < 5) {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await context.Response.WriteAsync("Username too short! (Must be at least 5 characters)");
+                return;
+            }
+            if (userData.Password != null && userData.Password.Length < 8) {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await context.Response.WriteAsync("Password too short! (Must be at least 8 characters)");
+                return;
+            }
+
             // Create new user object which we add the details
             User user = new() {
                 Id = userId,

@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
-import API_ROOT from '../config';
+import { updateTask } from '../Services/taskServices';
 
 function EditTaskModal({ show, handleClose, taskDetails, onSave }) {
-    const [editedName, setEditedName] = useState(taskDetails.name);
-    const [editedDescription, setEditedDescription] = useState(taskDetails.description);
-    const [editedStatus, setEditedStatus] = useState(taskDetails.status);
+    const [editedName, setEditedName] = useState('');
+    const [editedDescription, setEditedDescription] = useState('');
+    const [editedStatus, setEditedStatus] = useState(0);
   
 
     // Update data to old data
     useEffect(() => {
         if (taskDetails) {
-            setEditedName(taskDetails.name);
-            setEditedDescription(taskDetails.description);
-            setEditedStatus(taskDetails.status);
+            setEditedName(taskDetails.name || '');
+            setEditedDescription(taskDetails.description || '');
+            setEditedStatus(taskDetails.status || 0);
         }
     }, [taskDetails]);
   
@@ -23,31 +23,24 @@ function EditTaskModal({ show, handleClose, taskDetails, onSave }) {
         const token = sessionStorage.getItem("sessionToken");
 
         try {
-            var updatedTask = {
+            // Update only the fields that were changed
+            var updatedTask = {};
+            if (editedName.trim() !== taskDetails.name) updatedTask.name = editedName;
+            if (editedDescription.trim() !== taskDetails.description) updatedTask.description = editedDescription;
+            const status = parseInt(editedStatus);
+            if (status !== taskDetails.status) updatedTask.status = status;
+
+            await updateTask(updatedTask, taskDetails.id);
+            console.log(updatedTask);
+
+            var returnedUpdatedTask = {
+                ...taskDetails, // Spread the existing task object
                 name: editedName,
                 description: editedDescription,
                 status: parseInt(editedStatus)
             };
-            const response = await fetch(`${API_ROOT}/tasks/update/${taskDetails.id}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(updatedTask)
-            });
-      
-            if (response.ok) {
-                var returnedUpdatedTask = {
-                    ...taskDetails, // Spread the existing task object
-                    name: editedName,
-                    description: editedDescription,
-                    status: parseInt(editedStatus)
-                };
-                onSave(returnedUpdatedTask);
-            } else {
-                console.error('Failed to update task:', await response.text());
-            }
+            onSave(returnedUpdatedTask);
+
         } catch (error) {
             console.error('Error updating task:', error.message);
         }

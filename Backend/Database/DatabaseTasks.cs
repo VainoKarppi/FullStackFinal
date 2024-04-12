@@ -1,21 +1,29 @@
 
 using System.Data;
+using System.Text.Json;
 using MySqlConnector;
 
 namespace Backend;
 public static partial class Database {
     
-    public static async Task<List<TodoTask>> GetTasksAsync(int userId, string? filter, int offset = 0) {
-        string query = "SELECT * FROM tasks WHERE owner_id=@owner_id ";
-
-        // Add Filter if in use
-        if (!string.IsNullOrEmpty(filter)) query += $" AND LOWER(name) LIKE '%{filter.ToLower()}%' ";
-
-        query += "ORDER BY task_id LIMIT 10 OFFSET " + offset;
+    public static async Task<List<TodoTask>> GetTasksAsync(int userId, string? filter, int offset = 0, bool decend = false) {
+        string query = "SELECT * FROM ";
+        if (decend) {
+            query += @$"(SELECT * FROM tasks WHERE owner_id=@owner_id";
+            if (offset > 0) query += $" AND task_id < @offset";
+            if (!string.IsNullOrEmpty(filter)) query += $" AND LOWER(name) LIKE '%{filter.ToLower()}%' ";
+            query += " ORDER BY task_id DESC LIMIT 10) AS subquery ORDER BY task_id ASC";
+        } else {
+            query += "tasks WHERE owner_id=@owner_id ";
+            if (!string.IsNullOrEmpty(filter)) query += $" AND LOWER(name) LIKE '%{filter.ToLower()}%' ";
+            if (offset > 0) query += $"AND task_id > @offset ";
+            query += "ORDER BY task_id LIMIT 10";
+        }
 
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
         cmd.Parameters.AddWithValue("@owner_id", userId);
+        cmd.Parameters.AddWithValue("@offset", offset);
 
         // Read data from Database
         List<TodoTask> tasks = [];
@@ -83,10 +91,18 @@ public static partial class Database {
     public static async Task UpdateTaskAsync(TodoTask task) {
         // Update values only if not null
         string query = "UPDATE tasks SET" ;
-        if (task.Name is not null) query += " name=@name";
-        if (task.Description is not null) query += ", description=@description";
-        if (task.Status is not null) query += ", status=@status";
-        if (task.EndDateUTC is not null) query += ", end_date_utc=@end_date_utc";
+
+        // Add only the values that were changed to query string
+        if (task.Name != null) query += " name=@name";
+        if (task.Name != null && (task.Description != null || task.Status != null || task.EndDateUTC != null)) query += ",";
+
+        if (task.Description != null) query += " description=@description";
+        if (task.Description != null && (task.Status != null || task.EndDateUTC != null)) query += ",";
+
+        if (task.Status != null) query += " status=@status";
+        if (task.Status != null && task.EndDateUTC != null) query += ",";
+
+        if (task.EndDateUTC != null) query += " end_date_utc=@end_date_utc";
         query += " WHERE task_id=@task_id";
 
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
@@ -101,7 +117,7 @@ public static partial class Database {
         int rowsAffected = await cmd.ExecuteNonQueryAsync();
         if (rowsAffected != 1) throw new Exception($"Unable to update task! {task.Id}");
     
-        Log($"Updated task. Name:{task.Name != null}, Description:{task.Description != null}, EndTime:{task.EndDateUTC != null}", LogCodes.TaskUpdated, task.OwnerId);
+        Log($"Updated task. Name:{task.Name != null}, Description:{task.Description != null}, Status:{task.Status != null}, EndTime:{task.EndDateUTC != null}", LogCodes.TaskUpdated, task.OwnerId);
     }
     public static async Task<int> CreateTaskAsync(TodoTask task) {
 

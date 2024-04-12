@@ -1,36 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Modal, Form } from 'react-bootstrap';
-import API_ROOT from '../config';
-
+import { createTask } from '../Services/taskServices';
 
 
 function NewTaskModal({ show, handleClose, onSave }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
+    // Reset the state when the modal is shown
+    useEffect(() => {
+      if (show) {
+        setName('');
+        setDescription('');
+      }
+    }, [show]);
+
     const handleSave = async (e) => {
         e.preventDefault();
 
-        const token = sessionStorage.getItem("sessionToken");
-
-        const formData = new FormData();
-        formData.append('name', name);
-        formData.append('description', description);
-
         try {
-            const response = await fetch(`${API_ROOT}/tasks/create`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-      
-            if (response.ok) {
-                onSave(await response.json());
-            } else {
-                console.error('Failed to create task:', await response.text());
-            }
+          const formData = new FormData();
+          formData.append('name', name);
+          formData.append('description', description);
+
+          const task = await createTask(formData);
+          onSave(task);
         } catch (error) {
             console.error('Error creating task:', error.message);
         }

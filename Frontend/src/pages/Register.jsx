@@ -2,8 +2,7 @@
 import React, { useState } from 'react';
 import { Container, Form, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import API_ROOT from '../config';
-
+import { registerUser } from '../Services/userServices';
 
 const Register = () => {
     const [username, setUsername] = useState('');
@@ -15,37 +14,22 @@ const Register = () => {
 
     const handleRegister = async (e) => {
         e.preventDefault();
-        const formData = new FormData();
-        formData.append('username', username);
-        formData.append('password', password);
         
         try {
-            const response = await fetch(`${API_ROOT}/register`, {
-                method: 'POST',
-                body: formData,
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Registration successful:', data);
-                
-                const sessionToken = data.sessionToken;
-                console.log('Session token:', sessionToken);
-                
-                setShowSuccess(true);
-                sessionStorage.setItem("sessionToken", sessionToken);
-                sessionStorage.setItem("tokenExpirationUTC",data.tokenExpirationUTC);
-                
-                setTimeout(() => {
-                    navigate('/tasks'); // Redirect to /tasks after 2 seconds
-                }, 2000); // 2 seconds
-            } else {
-                setShowSuccess(false);
-                const errorMessage = await response.text();
-                console.error('Registration failed:', errorMessage);
-                setShowError(errorMessage);
-            }
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+        
+            await registerUser(formData);
+            setShowSuccess(true);
+
+            setTimeout(() => {
+                navigate('/tasks'); // Redirect to /tasks after 2 seconds
+            }, 2000); // 2 seconds
+
+
         } catch (error) {
+            setShowError(error.response.data);
             console.error('Error:', error.message);
         }
     };

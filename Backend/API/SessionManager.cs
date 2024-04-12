@@ -32,17 +32,10 @@ public static class SessionManager {
         Sessions.Add(guid,(userId,username,DateTime.Now));
         if (devSession) DevSessions.Add(guid);
     }
-    public static bool UpdateSession(Guid guid) {
-        try {
-            // Update session timeout
-            if (!DevSessions.Contains(guid))
-                Sessions[guid] = (Sessions[guid].Item1, Sessions[guid].Item2, DateTime.Now);
-
-            return true;
-        } catch (Exception) {
-            return false;
-        }
-
+    public static void UpdateSession(Guid guid) {
+        // Update session timeout
+        if (!DevSessions.Contains(guid))
+            Sessions[guid] = (Sessions[guid].Item1, Sessions[guid].Item2, DateTime.Now);
     }
     public static bool RemoveSession(Guid guid) {
         if (DevSessions.Contains(guid)) return true; // Dont remove CLI generated tokens
