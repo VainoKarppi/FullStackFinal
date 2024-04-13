@@ -14,6 +14,10 @@ export const registerUser = async (formData) => {
 export const loginUser = async (formData) => {
     try {
         const response = await axiosInstance.post("/login", formData);
+
+        if (!response.data.sessionToken) throw new Error("No session token was found!");
+        if (!response.data.tokenExpirationUTC) throw new Error("No session token expiration time was found!");
+
         sessionStorage.setItem("sessionToken", response.data.sessionToken);
         sessionStorage.setItem("tokenExpirationUTC", response.data.tokenExpirationUTC);
         return true;

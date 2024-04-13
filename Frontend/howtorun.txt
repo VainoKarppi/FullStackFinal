@@ -1,8 +1,5 @@
 navigate to Frontend folder using cd ./Frontend
 
-npm install react-router-dom localforage match-sorter sort-by
+npm install
 
 npm run dev
-
-
-if the program is not working run: npm install, and then npm run dev again!

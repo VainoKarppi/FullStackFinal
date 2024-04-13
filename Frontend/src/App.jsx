@@ -13,6 +13,9 @@ import Account from './pages/Account';
 // Tasks UI
 import Tasks from "./pages/Tasks";
 
+// Activity
+import Activity from "./pages/Activity";
+
 
 import NoPage from "./pages/NoPage";
 
@@ -23,6 +26,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="register" element={<Register />} />
+          <Route path="activity" element={<Activity />} />
           <Route path="account" element={<Account />} />
           <Route path="logout" element={<Logout />} />
           <Route path="tasks" element={<Tasks />} />

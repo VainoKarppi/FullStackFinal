@@ -28,8 +28,11 @@ const Tasks = () => {
     const handleCreateTaskSave = (task) => {
         console.log('Received created task data:', task);
 
-        // Add task to list
-        setTasks(prevTasks => [...prevTasks, task]); // Add the new task to the tasks array
+        // Add only to the list, if the size is less than 10
+        if (tasks.length < 10) {
+            // Add task to list
+            setTasks(prevTasks => [...prevTasks, task]); // Add the new task to the tasks array
+        }
 
         handleCloseCreateTaskModal(); // Close the modal after handling the data
     };
@@ -177,11 +180,11 @@ const Tasks = () => {
                     <Form.Label>Search</Form.Label>
                     <InputGroup>
                         <Form.Control
-                        type="search"
-                        placeholder="Search for title"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        style={{ maxWidth: '200px', marginRight: '10px' }} // Limiting the width and adding margin
+                            type="search"
+                            placeholder="Search for title"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={{ maxWidth: '200px', marginRight: '10px' }} // Limiting the width and adding margin
                         />
                         <Button variant="primary" onClick={searchTask}>
                         <FaSearch /> Search
@@ -225,7 +228,7 @@ const Tasks = () => {
                 {currentPage !== 0 && (
                     <Button onClick={() => handlePreviousPage(tasks)} style={{marginBottom:"3px"}}>Previous Page</Button>
                 )}
-                {tasks.length === 10 && (
+                {tasks.length >= 10 && (
                     <Button onClick={() => handleNextPage(tasks)}>Next Page</Button>
                 )}
             </Container>

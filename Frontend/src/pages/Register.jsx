@@ -33,6 +33,8 @@ const Register = () => {
             console.error('Error:', error.message);
         }
     };
+
+
     return (
         <Container style={{ marginTop: '50px' }}>
             <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', margin:"20px"}}>
