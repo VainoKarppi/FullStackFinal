@@ -11,14 +11,13 @@ import ProtectedLayout from '../Components/ProtectedLayout.jsx';
 const Activities = () => {
     const navigate = useNavigate();
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const handleCloseCreateTaskModal = () => setShowCreateModal(false);
-
+    const handleCloseCreateActivityModal = () => setShowCreateModal(false);
     const handleShowCreateTaskModal = () => setShowCreateModal(true);
 
     const handleCreateActivitySave = (task) => {
         console.log('Received created activity data:', task);
 
-        handleCloseCreateTaskModal(); // Close the modal after handling the data
+        handleCloseCreateActivityModal(); // Close the modal after handling the data
     };
 
     var hasRun = false;
@@ -81,7 +80,7 @@ const Activities = () => {
 
                     <NewActivityModal
                         show={showCreateModal}
-                        handleClose={handleCloseCreateTaskModal}
+                        handleClose={handleCloseCreateActivityModal}
                         onSave={handleCreateActivitySave}
                     />
 
