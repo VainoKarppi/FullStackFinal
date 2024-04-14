@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Form, FormControl, ListGroup, Container } from 'react-bootstrap';
-import { FaPen, FaTrash, FaSearch } from 'react-icons/fa';
+import { FaTrash, FaSearch } from 'react-icons/fa';
+import { getTasksByFilter } from '../Services/taskServices';
 
 function NewActivityModal({ show, handleClose, onSave }) {
     const [activityName, setActivityName] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
-    // TODO
+    const [description, setDescription] = useState('');
     const [dueDate, setDueDate] = useState('');
     const [repeatOption, setRepeatOption] = useState('');
 
     const [searchResults, setSearchResults] = useState([]);
     const [selectedTasks, setSelectedTasks] = useState([]);
-
-    const allTasks = ["Task 1", "Task 2", "Task 3", "Task 4"];
 
     // Reset the state when the modal is shown
     useEffect(() => {
@@ -33,10 +32,30 @@ function NewActivityModal({ show, handleClose, onSave }) {
         }
     }, [show]);
 
-    const handleSearch = (term) => {
-      setSearchQuery(term);
-      const results = allTasks.filter(task => task.toLowerCase().includes(term.toLowerCase()));
-      setSearchResults(results);
+    
+    const handleSearch = async (filter) => {
+      setSearchQuery(filter);
+
+      // Return results from server
+      const results = await getTasksByFilter(filter);
+
+      // Calculate relevance score for each task. Used to sort
+      results.forEach(task => {
+        const score = calculateRelevanceScore(task.name, filter);
+        task.relevanceScore = score;
+      });
+
+      // Sort the results array based on relevance score
+      results.sort((a, b) => b.relevanceScore - a.relevanceScore);
+
+      // Function to calculate relevance score for a task
+      function calculateRelevanceScore(taskName, filter) {
+        const regex = new RegExp(filter, 'gi');
+        const matches = taskName.match(regex);
+        return matches ? matches.length : 0;
+      }
+
+      setSearchResults(results.slice(0, 5));
     };
 
     const handleSelectTask = (task) => {
@@ -46,18 +65,9 @@ function NewActivityModal({ show, handleClose, onSave }) {
     };
 
     const handleRemoveTask = (taskToRemove) => {
-      console.log(taskToRemove);
-      console.log(selectedTasks);
-      const updatedTasks = selectedTasks.filter(task => task.toLowerCase() !== taskToRemove.toLowerCase());
+      const updatedTasks = selectedTasks.filter(task => task.id !== taskToRemove.id);
       setSelectedTasks(updatedTasks);
     }
-
-    const handleAddTask = () => {
-      if (searchQuery.trim() !== '') {
-        setSelectedTasks([...selectedTasks, searchQuery]);
-        setSearchQuery('');
-      }
-    };
 
     const handleSave = async (e) => {
       e.preventDefault();
@@ -68,13 +78,6 @@ function NewActivityModal({ show, handleClose, onSave }) {
       handleClose();
     };
 
-    const handleDueDateChange = (event) => {
-        setDueDate(event.target.value);
-    };
-
-    const handleRepeatChange = (event) => {
-        setRepeat(event.target.value);
-    };
 
 
     return (
@@ -85,7 +88,7 @@ function NewActivityModal({ show, handleClose, onSave }) {
           <Modal.Body>
             <Form>
               <Form.Group>
-                <Form.Label>Activity Name</Form.Label>
+                <Form.Label><h6>Activity Name</h6></Form.Label>
                 <Form.Control
                   type="text"
                   placeholder="Enter task name"
@@ -94,9 +97,19 @@ function NewActivityModal({ show, handleClose, onSave }) {
                 />
               </Form.Group>
               <hr/>
-
+              <Form.Group controlId="taskDescription">
+                <Form.Label><h6>Description</h6></Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={2}
+                  placeholder="Enter task description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </Form.Group>
+              <hr/>
               <Form.Group>
-                <Form.Label>Add Task</Form.Label>
+                <Form.Label><h6>Add Task</h6></Form.Label>
                 <FormControl
                   type="text"
                   placeholder="Search for task to add..."
@@ -113,7 +126,7 @@ function NewActivityModal({ show, handleClose, onSave }) {
                 <ListGroup>
                   {searchResults.map((task, index) => (
                     <ListGroup.Item key={index} action onClick={() => handleSelectTask(task)}>
-                      {task}
+                      {task.name}
                     </ListGroup.Item>
                   ))}
                 </ListGroup>
@@ -129,7 +142,7 @@ function NewActivityModal({ show, handleClose, onSave }) {
                     <ListGroup>
                       {selectedTasks.map((task, index) => (
                         <ListGroup.Item key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>{task}</div>
+                          <div>{task.name}</div>
                           <Button
                             variant="danger"
                             onClick={() => handleRemoveTask(task)}
@@ -145,7 +158,7 @@ function NewActivityModal({ show, handleClose, onSave }) {
               <hr/>
 
               <Form.Group style={{marginBottom:"8px"}}>
-                <Form.Label>Due Date:</Form.Label>
+                <Form.Label><h6>Due Date:</h6></Form.Label>
                 <Form.Control
                   type="date"
                   value={dueDate}
@@ -154,7 +167,7 @@ function NewActivityModal({ show, handleClose, onSave }) {
               </Form.Group>
               <hr/>
               <Form.Group style={{marginBottom:"8px"}}>
-                <Form.Label>Repeat:</Form.Label>
+                <Form.Label><h6>Repeat:</h6></Form.Label>
                 <Form.Control
                   as="select"
                   value={repeatOption}
