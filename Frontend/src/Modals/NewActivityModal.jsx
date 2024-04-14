@@ -32,7 +32,7 @@ function NewActivityModal({ show, handleClose, onSave }) {
         }
     }, [show]);
 
-    
+
     const handleSearch = async (filter) => {
       setSearchQuery(filter);
 
@@ -71,11 +71,15 @@ function NewActivityModal({ show, handleClose, onSave }) {
 
     const handleSave = async (e) => {
       e.preventDefault();
+
+      const selectedTaskIds = selectedTasks.map(task => task.id);
+
       console.log(activityName);
-      console.log(selectedTasks);
+      console.log(selectedTaskIds);
       console.log(dueDate);
       console.log(repeatOption);
-      handleClose();
+      
+      //handleClose();
     };
 
 
@@ -173,22 +177,33 @@ function NewActivityModal({ show, handleClose, onSave }) {
                   value={repeatOption}
                   onChange={(e) => setRepeatOption(e.target.value)}
                 >
-                  <option value="">No Repeat</option>
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
+                  <option value={0}>No Repeat</option>
+                  <option value={1}>Daily</option>
+                  <option value={2}>Weekly</option>
+                  <option value={3}>Monthly</option>
+                  <option value={4}>Yearly</option>
                 </Form.Control>
               </Form.Group>
             </Form>
           </Modal.Body>
           <Modal.Footer>
-            {selectedTasks.length === 0 && (
-              <p style={{ fontStyle: 'italic' }}>(No tasks added)</p>
-            )}
+            {selectedTasks.length === 0 || dueDate === "" || activityName === "" ? (
+              <div>
+                {activityName === "" && (
+                  <p style={{fontSize: "12px", color: "red", fontStyle: 'italic', marginBottom: "0" }}>(No activity name added)</p>
+                )}
+                {selectedTasks.length === 0 && (
+                  <p style={{fontSize: "12px", color: "red", fontStyle: 'italic', marginBottom: "0" }}>(No tasks added)</p>
+                )}
+                {dueDate === "" && (
+                  <p style={{fontSize: "12px", color: "red", fontStyle: 'italic', marginBottom: "0" }}>(No due date added)</p>
+                )}
+              </div>
+            ) : null}
             <Button variant="secondary" onClick={handleClose}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={handleSave} disabled={selectedTasks.length === 0}>
+            <Button variant="primary" onClick={handleSave} disabled={selectedTasks.length === 0 || dueDate === "" || activityName === ""}>
               Create
             </Button>
           </Modal.Footer>
