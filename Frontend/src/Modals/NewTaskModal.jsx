@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Form } from 'react-bootstrap';
+import { Button, Modal, OverlayTrigger, Popover, Form } from 'react-bootstrap';
 import { createTask } from '../Services/taskServices';
-
 
 function NewTaskModal({ show, handleClose, onSave }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
     // Reset the state when the modal is shown
     useEffect(() => {
@@ -25,11 +25,15 @@ function NewTaskModal({ show, handleClose, onSave }) {
 
           const task = await createTask(formData);
           onSave(task);
+          handleClose();
         } catch (error) {
-            console.error('Error creating task:', error.message);
+          console.error('Error creating task:', error);
+          if (error.response.data) {
+            setErrorMessage(error.response.data);
+          } else {
+            setErrorMessage("Unable to contact API server");
+          }
         }
-
-        handleClose();
     };
 
   return (
@@ -61,6 +65,11 @@ function NewTaskModal({ show, handleClose, onSave }) {
         </Form>
       </Modal.Body>
       <Modal.Footer>
+        {errorMessage !== "" ? (
+          <div>
+            <p style={{fontSize: "12px", color: "red", fontStyle: 'italic', marginBottom: "0" }}>ERROR: {errorMessage}</p>
+          </div>
+          ) : null}
         <Button variant="secondary" onClick={handleClose}>
           Cancel
         </Button>

@@ -42,6 +42,10 @@ internal class Program {
             app.MapPost("/tasks/create", ApiMethods.CreateTask);
             app.MapGet("/tasks", ApiMethods.GetTasks);
             app.MapGet("/tasks/{taskId}", ApiMethods.GetTask);
+
+            app.MapPost("/activities/create", ApiMethods.CreateActivity);
+            app.MapGet("/activities", ApiMethods.GetActivities);
+
             app.MapPost("/register", ApiMethods.Register);
             app.MapPost("/login", ApiMethods.Login);
             app.MapPost("/logout", ApiMethods.Logout);

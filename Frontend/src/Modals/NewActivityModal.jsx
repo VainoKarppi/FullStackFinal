@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Modal, Form, FormControl, ListGroup, Container } from 'react-bootstrap';
 import { FaTrash, FaSearch } from 'react-icons/fa';
 import { getTasksByFilter } from '../Services/taskServices';
+import { createActivity } from '../Services/activityServices';
 
 function NewActivityModal({ show, handleClose, onSave }) {
     const [activityName, setActivityName] = useState('');
@@ -13,6 +14,8 @@ function NewActivityModal({ show, handleClose, onSave }) {
 
     const [searchResults, setSearchResults] = useState([]);
     const [selectedTasks, setSelectedTasks] = useState([]);
+
+    const [errorMessage, setErrorMessage] = useState('');
 
     // Reset the state when the modal is shown
     useEffect(() => {
@@ -37,7 +40,10 @@ function NewActivityModal({ show, handleClose, onSave }) {
       setSearchQuery(filter);
 
       // Return results from server
-      const results = await getTasksByFilter(filter);
+      let results = await getTasksByFilter(filter);
+
+      // Filter out tasks from results that are already present in selectedTasks based on task.id
+      results = results.filter(result => !selectedTasks.some(task => task.id === result.id));
 
       // Calculate relevance score for each task. Used to sort
       results.forEach(task => {
@@ -78,8 +84,27 @@ function NewActivityModal({ show, handleClose, onSave }) {
       console.log(selectedTaskIds);
       console.log(dueDate);
       console.log(repeatOption);
-      
-      //handleClose();
+
+      const formData = new FormData();
+      formData.append('name', activityName);
+      formData.append('description', description);
+      formData.append('tasks', selectedTaskIds);
+      formData.append('due', dueDate);
+      formData.append('repeat', repeatOption);
+
+      try {
+        const data = await createActivity(formData);
+        console.log(data);
+        handleClose();
+        onSave(data);
+      } catch (error) {
+        console.error('Error creating task:', error);
+        if (error.response.data) {
+          setErrorMessage(error.response.data);
+        } else {
+          setErrorMessage(error.message);
+        }
+      }
     };
 
 
@@ -141,7 +166,7 @@ function NewActivityModal({ show, handleClose, onSave }) {
                   <Form.Label><h6>Added Tasks:</h6></Form.Label>
                   <hr style={{ marginTop: "0" }} /> {/* Move the hr higher */}
                   {selectedTasks.length === 0 ? (
-                    <p style={{ fontStyle: 'italic' }}>No tasks added...</p>
+                    <p style={{ fontStyle: 'italic' }}>No tasks added to list yet...</p>
                   ) : (
                     <ListGroup>
                       {selectedTasks.map((task, index) => (
@@ -187,8 +212,11 @@ function NewActivityModal({ show, handleClose, onSave }) {
             </Form>
           </Modal.Body>
           <Modal.Footer>
-            {selectedTasks.length === 0 || dueDate === "" || activityName === "" ? (
+            {selectedTasks.length === 0 || dueDate === "" || activityName === "" || errorMessage !== "" ? (
               <div>
+                {errorMessage !== "" && (
+                  <p style={{fontSize: "12px", color: "red", fontStyle: 'italic', marginBottom: "0" }}>ERROR: {errorMessage}</p>
+                )}
                 {activityName === "" && (
                   <p style={{fontSize: "12px", color: "red", fontStyle: 'italic', marginBottom: "0" }}>(No activity name added)</p>
                 )}

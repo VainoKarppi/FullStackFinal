@@ -6,8 +6,11 @@ namespace Backend;
 
 public static partial class Database {
     private static MySqlConnection? Connection;
-
-    public static async void ConnectToDatabase() {
+    public class ConnectionManager {
+        public required MySqlConnectionStringBuilder Builder { get; set; }
+        public bool Autocreate { get; set; } = false;
+    }
+    public static ConnectionManager GetConnectionBuilder() {
         IConfigurationRoot configuration = Program.Configuration;
 
         // Retrieve configuration values for MySql connection
@@ -23,25 +26,36 @@ public static partial class Database {
             Server = server,
             Port = port,
             UserID = userId,
-            Password = password
+            Database = database,
+            Password = password,
         };
 
+        return new ConnectionManager() {Builder = builder, Autocreate = autocreate};
+    }
+    public static async void ConnectToDatabase() {
+        
+        ConnectionManager manager = GetConnectionBuilder();
+
+        // Remove Database from connection query, so that we can open the database if its not found yet
+        string database = manager.Builder.Database;
+        manager.Builder.Database = null;
+
         // Connect to database and open it. For now lets keep the socket always open
-        Connection = new MySqlConnection(builder.ConnectionString);
+        Connection = new MySqlConnection(manager.Builder.ConnectionString);
         await Connection.OpenAsync();
 
         // Create actual database if not found
-        if (autocreate) {
+        if (manager.Autocreate) {
             using MySqlCommand command = new ($"CREATE DATABASE IF NOT EXISTS {database}", Connection);
             if (await command.ExecuteNonQueryAsync() != 0)
                 Console.WriteLine($"Database not found, and new was created! ({database})");
         }
 
         // Set active database. Will throw error if database not found!
-        await Connection.ChangeDatabaseAsync(database!);
+        await Connection.ChangeDatabaseAsync(database);
 
         // Create ncessary tables automatically if not created
-        if (autocreate) CreateTables();
+        if (manager.Autocreate) CreateTables();
     }
 
 
@@ -81,6 +95,7 @@ public static partial class Database {
             password_hash VARCHAR(64) NOT NULL,
             salt INT NOT NULL,
             last_login_time_utc TIMESTAMP NULL DEFAULT NULL,
+            registration_date_utc TIMESTAMP DEFAULT UTC_TIMESTAMP(),
             active TINYINT(1) NOT NULL DEFAULT 1
         )", Connection);
         tablesCreated += users.ExecuteNonQuery();
@@ -99,13 +114,14 @@ public static partial class Database {
         using MySqlCommand activities = new ($@"CREATE TABLE IF NOT EXISTS {tableName} (
             activity_id INT AUTO_INCREMENT PRIMARY KEY,
             owner_id INT NOT NULL,
-            title VARCHAR(255) NOT NULL,
+            name VARCHAR(255) NOT NULL,
             description TEXT,
-            url VARCHAR(255),
-            start_date_utc DATE,
-            end_date_utc DATE,
-            status VARCHAR(50),
+            start_date_utc TIMESTAMP,
+            end_date_utc TIMESTAMP NULL DEFAULT NULL,
+            due_date_utc TIMESTAMP NULL DEFAULT NULL,
+            status TINYINT UNSIGNED NOT NULL,
             tags VARCHAR(255),
+            times_completed INT NOT NULL DEFAULT 0,
             activity_type_id INT NULL DEFAULT NULL,
             FOREIGN KEY (activity_type_id) REFERENCES activity_types(activity_type_id),
             FOREIGN KEY (owner_id) REFERENCES users(user_id)
@@ -124,6 +140,7 @@ public static partial class Database {
             end_date_utc TIMESTAMP NULL DEFAULT NULL,
             tags VARCHAR(255) NULL DEFAULT NULL,
             status TINYINT UNSIGNED NOT NULL,
+            times_completed INT NOT NULL DEFAULT 0,
             FOREIGN KEY (activity_id) REFERENCES activities(activity_id),
             FOREIGN KEY (owner_id) REFERENCES users(user_id)
         )", Connection);
@@ -135,7 +152,7 @@ public static partial class Database {
             log_id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NULL DEFAULT NULL,
             timestamp TIMESTAMP,
-            code INT NULL DEFAULT NULL,
+            code TINYINT UNSIGNED NULL DEFAULT NULL,
             message TEXT NULL DEFAULT NULL,
             FOREIGN KEY (user_id) REFERENCES users(user_id)
         )", Connection);

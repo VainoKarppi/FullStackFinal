@@ -8,6 +8,32 @@ public enum LogCodes {
     TaskCreated,
     TaskUpdated,
     TaskRemoved,
+    ActivityCreated,
+    ActivityUpdated,
+    ActivityRemoved,
+}
+
+
+public class Activity {
+    public List<TodoTask> Tasks { get; set; } = [];
+    public enum ActivityStatus {
+        InProgress,
+        Done,
+        Cancelled,
+        Failed,
+    }
+    public int? Id { get; set; }
+    public int? OwnerId { get; set; }
+    public int[] TaskIds { get; set;} = [];
+    public string? Name { get; set; }
+    public ActivityStatus? Status { get; set; }
+    public string? Description { get; set; }
+    public DateTime? StartDateUTC { get; set; }
+    public DateTime? EndDateUTC { get; set; }
+    public DateTime? DueDateUTC { get; set; }
+    public string[]? Tags { get; set; }
+    public int TimesCompleted { get; set; }
+    public bool IsCompleted { get; set; } = false;
 }
 public class TodoTask() {
     
@@ -25,6 +51,7 @@ public class TodoTask() {
     public DateTime? EndDateUTC { get; set; }
     public string[]? Tags { get; set; }
     public TaskStatus? Status { get; set; }
+    public int TimesCompleted { get; set; }
     public bool IsCompleted { get; set;} = false;
 }
 

@@ -103,3 +103,18 @@ export const updateTask = async (updatedTask, taskId) => {
 
     return (response.data);
 };
+
+
+export const getTask = async (taskId) => {
+    if(!await userAuthorized()) throw new Error("Not authorized!");
+
+    const token = sessionStorage.getItem("sessionToken");
+
+    const response = await axiosInstance.get(`/tasks/${taskId}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    return (response.data);
+};

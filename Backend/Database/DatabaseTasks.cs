@@ -67,7 +67,6 @@ public static partial class Database {
         cmd.Parameters.AddWithValue("@task_id",taskId);
 
         // Read data from Database
-        List<TodoTask> tasks = [];
         using MySqlDataReader reader = await cmd.ExecuteReaderAsync();
         while (await reader.ReadAsync()) {
             TodoTask task = new() {
@@ -88,7 +87,7 @@ public static partial class Database {
         return null;
     }
 
-    public static async Task UpdateTaskAsync(TodoTask task) {
+    public static async Task UpdateTaskAsync(TodoTask task, bool incrementTimesCompleted = false) {
         // Update values only if not null
         string query = "UPDATE tasks SET" ;
 
@@ -103,6 +102,8 @@ public static partial class Database {
         if (task.Status != null && task.EndDateUTC != null) query += ",";
 
         if (task.EndDateUTC != null) query += " end_date_utc=@end_date_utc";
+        if (incrementTimesCompleted) query += ", times_completed = times_completed + 1";
+
         query += " WHERE task_id=@task_id";
 
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
@@ -119,7 +120,20 @@ public static partial class Database {
     
         Log($"Updated task. Name:{task.Name != null}, Description:{task.Description != null}, Status:{task.Status != null}, EndTime:{task.EndDateUTC != null}", LogCodes.TaskUpdated, task.OwnerId);
     }
+    public static async Task<bool> TaskNameInUse(int? ownerId, string? name) {
+        if (ownerId is null || name is null) return false;
+
+        string query = "SELECT EXISTS (SELECT 1 FROM tasks WHERE owner_id=@owner_id AND name=@name COLLATE utf8mb4_general_ci) AS row_exists;";
+        using MySqlCommand cmd = new MySqlCommand(query, Connection);
+
+        cmd.Parameters.AddWithValue("@owner_id", ownerId);
+        cmd.Parameters.AddWithValue("@name", name);
+
+        bool nameInUse = Convert.ToBoolean(await cmd.ExecuteScalarAsync());
+        return nameInUse;
+    }
     public static async Task<int> CreateTaskAsync(TodoTask task) {
+        if (await TaskNameInUse(task.OwnerId, task.Name)) throw new TaskNameInUseException("Task name already in use");
 
         string query = @"INSERT INTO tasks (owner_id, name, description, start_date_utc, status)
             VALUES (@owner_id, @name, @description, @start_date_utc, @status);

@@ -42,7 +42,12 @@ public static partial class ApiMethods {
         } catch (Exception ex) {
             // Return error to client
             if (Program.DEBUG) Console.WriteLine(ex);
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            if (ex is TaskNameInUseException) {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            } else {
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            }
+            
             await context.Response.WriteAsync(ex.Message);
         }
     }
@@ -67,6 +72,34 @@ public static partial class ApiMethods {
         }
     }
 
+    // Resets endDate increments times_completed and sets task status to 0 = In Progress
+    public static async Task ResetTask(HttpContext context, int taskId) {
+        try {
+            // Check authentication. Returns error code automatically, if not authenticated
+            if (!await SessionManager.Authorized(context)) return;
+
+            // Get user ID from sessions list
+            int userId = SessionManager.GetUserIdByGuid(SessionManager.GetTokenFromHeader(context.Request.Headers));
+
+            TodoTask task = new() {
+                Id = taskId,
+                OwnerId = userId,
+                Status = TodoTask.TaskStatus.InProgress,
+                EndDateUTC = null
+            };
+
+            // Use boolean to increment timesCompleted
+            await Database.UpdateTaskAsync(task, true);
+
+            context.Response.StatusCode = StatusCodes.Status200OK;
+            if (Program.DEBUG) Console.WriteLine($"User:{userId} updated task:{taskId}");
+        } catch (Exception ex) {
+            // Return error to client
+            if (Program.DEBUG) Console.WriteLine(ex);
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsync(ex.Message);
+        }
+    }
     public static async Task UpdateTask(HttpContext context, int taskId) {
         try {
             // Check authentication. Returns error code automatically, if not authenticated

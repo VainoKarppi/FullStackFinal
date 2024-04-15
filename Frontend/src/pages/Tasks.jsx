@@ -195,7 +195,6 @@ const Tasks = () => {
                 <Table>
                     <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Title</th>
                         <th>Description</th>
                         <th>Start Date</th>
@@ -206,7 +205,6 @@ const Tasks = () => {
                     <tbody>
                     {tasks.map(task => (
                         <tr key={task.id}>
-                        <td>{task.id}</td>
                         <td>{task.name}</td>
                         <td>{task.description}</td>
                         <td>{task.startDateUTC}</td>

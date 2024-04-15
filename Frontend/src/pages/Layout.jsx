@@ -16,7 +16,7 @@ const Layout = () => {
     <div>
       <Navbar bg="dark" variant="dark" expand="lg">
         <Container>
-          <Navbar.Brand href="/">React-Bootstrap</Navbar.Brand>
+          <Navbar.Brand href="/">FullStackFinal</Navbar.Brand>
 
           {isLoggedIn ? (
             <>
@@ -28,14 +28,10 @@ const Layout = () => {
                   <Nav.Link href="/statistics">Statistics</Nav.Link> 
                   <Nav.Link href="/account">Account</Nav.Link> 
                 </Nav>
+                <Button href="/logout">Logout</Button>
               </Navbar.Collapse>
             </>
           ) : null}
-          
-    
-          {isLoggedIn && ( // Add Logout button only, if the user has logged in
-              <Button href="/logout">Logout</Button>
-          )}
         </Container>
       </Navbar>
       <Outlet />
