@@ -32,6 +32,7 @@ public static partial class Database {
             TodoTask task = new() {
                 Id = reader.GetInt32("task_id"),
                 OwnerId = reader.GetInt32("owner_id"),
+                ActivityId = await reader.IsDBNullAsync("activity_id") ? null : reader.GetInt32("activity_id"),
                 Name = reader.GetString("name"),
                 Description = await reader.IsDBNullAsync("description") ? null : reader.GetString("description"),
                 Status = (TodoTask.TaskStatus?)reader.GetInt32("status"),
@@ -72,6 +73,7 @@ public static partial class Database {
             TodoTask task = new() {
                 Id = reader.GetInt32("task_id"),
                 OwnerId = reader.GetInt32("owner_id"),
+                ActivityId = await reader.IsDBNullAsync("activity_id") ? null : reader.GetInt32("activity_id"),
                 Name = reader.GetString("name"),
                 Description = await reader.IsDBNullAsync("description") ? null : reader.GetString("description"),
                 Status = (TodoTask.TaskStatus?)reader.GetInt32("status"),

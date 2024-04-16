@@ -65,17 +65,30 @@ public static partial class Database {
         return nameInUse;
     }
         
-    public static async Task DeleteActivityAsync(int userId, int taskId) {
-        string query = "DELETE FROM tasks WHERE owner_id=@owner_id AND task_id=@task_id";
-        using MySqlCommand cmd = new MySqlCommand(query, Connection);
+    public static async Task DeleteActivityAsync(int userId, int activityId) {
+        string queryUpdate = "UPDATE tasks SET activity_id=NULL WHERE activity_id=@activity_id";
+        string queryDelete = "DELETE FROM activities WHERE owner_id=@owner_id AND activity_id=@activity_id";
 
-        cmd.Parameters.AddWithValue("@owner_id", userId);
-        cmd.Parameters.AddWithValue("@task_id",taskId);
+        // Update tasks where activity id is used 
+        using (MySqlCommand cmd = new MySqlCommand(queryUpdate, Connection)) {
+            cmd.Parameters.AddWithValue("@owner_id", userId);
+            cmd.Parameters.AddWithValue("@activity_id",activityId);
 
-        int rowsAffected = await cmd.ExecuteNonQueryAsync();
-        if (rowsAffected == 0) throw new Exception($"Unable to remove task! USER:{userId},  TASK:{taskId}");
+            int rowsAffected = await cmd.ExecuteNonQueryAsync();
+            if (rowsAffected == 0) throw new Exception($"Unable to remove activity! USER:{userId},  TASK:{activityId}");
+        }
 
-        Log($"Removed task ID:{taskId}", LogCodes.TaskRemoved, userId);
+        // Delete activity row
+        using (MySqlCommand cmd = new MySqlCommand(queryDelete, Connection)) {
+            cmd.Parameters.AddWithValue("@owner_id", userId);
+            cmd.Parameters.AddWithValue("@activity_id",activityId);
+
+            int rowsAffected = await cmd.ExecuteNonQueryAsync();
+            if (rowsAffected == 0) throw new Exception($"Unable to remove activity! USER:{userId},  TASK:{activityId}");
+        }
+
+
+        Log($"Removed activity ID:{activityId}", LogCodes.ActivityRemoved, userId);
     }
     public static async Task<Activity?> GetActivityAsync(int userId, int taskId) {
         string query = "SELECT * FROM tasks WHERE owner_id=@owner_id AND task_id=@task_id";
@@ -119,38 +132,61 @@ public static partial class Database {
         return null;
     }
 
-    public static async Task UpdateActivityAsync(TodoTask task, bool incrementTimesCompleted = false) {
-        // Update values only if not null
-        string query = "UPDATE tasks SET" ;
-
-        // Add only the values that were changed to query string
-        if (task.Name != null) query += " name=@name";
-        if (task.Name != null && (task.Description != null || task.Status != null || task.EndDateUTC != null)) query += ",";
-
-        if (task.Description != null) query += " description=@description";
-        if (task.Description != null && (task.Status != null || task.EndDateUTC != null)) query += ",";
-
-        if (task.Status != null) query += " status=@status";
-        if (task.Status != null && task.EndDateUTC != null) query += ",";
-
-        if (task.EndDateUTC != null) query += " end_date_utc=@end_date_utc";
-        if (incrementTimesCompleted) query += ", times_completed = times_completed + 1";
-
-        query += " WHERE task_id=@task_id";
+    public static async Task ResetActivityAsync(Activity activity) {
+        string query = "UPDATE activities SET status=0, end_date_utc=NULL, start_date_utc=@start_date_utc, due_date_utc=@due_date_utc";
+        query += " WHERE activity_id=@activity_id";
 
         using MySqlCommand cmd = new MySqlCommand(query, Connection);
 
-        cmd.Parameters.AddWithValue("@task_id", task.Id);
-        cmd.Parameters.AddWithValue("@name", task.Name);
-        cmd.Parameters.AddWithValue("@description", task.Description);
-        cmd.Parameters.AddWithValue("@end_date_utc", task.EndDateUTC);
-        cmd.Parameters.AddWithValue("@status", task.Status);
+        cmd.Parameters.AddWithValue("@activity_id", activity.Id);
+        cmd.Parameters.AddWithValue("@due_date_utc", activity.DueDateUTC);
+        cmd.Parameters.AddWithValue("@start_date_utc", activity.StartDateUTC);
+
+        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+        if (rowsAffected != 1) throw new Exception($"Unable to update activity! {activity.Id}");
+        
+        // Reset tasks statuses to 0 for this activity
+        query = "UPDATE tasks SET status=0 WHERE activity_id=@activity_id";
+
+        using MySqlCommand cmd2 = new MySqlCommand(query, Connection);
+        cmd2.Parameters.AddWithValue("@activity_id", activity.Id);
+
+        await cmd2.ExecuteNonQueryAsync();
+
+        Log($"Reseted activity. ID:{activity.Id}", LogCodes.ActivityUpdated, activity.OwnerId);
+    }
+    public static async Task UpdateActivityAsync(Activity activity, bool incrementTimesCompleted = false) {
+        // Update values only if not null
+        string query = "UPDATE activities SET";
+
+        // Add only the values that were changed to query string
+        if (activity.Name != null) query += " name=@name";
+        if (activity.Name != null && (activity.Description != null || activity.Status != null || activity.EndDateUTC != null)) query += ",";
+
+        if (activity.Description != null) query += " description=@description";
+        if (activity.Description != null && (activity.Status != null || activity.EndDateUTC != null)) query += ",";
+
+        if (activity.Status != null) query += " status=@status";
+        if (activity.Status != null && activity.EndDateUTC != null) query += ",";
+
+        if (activity.EndDateUTC != null) query += " end_date_utc=@end_date_utc";
+        if (incrementTimesCompleted) query += ", times_completed = times_completed + 1";
+
+        query += " WHERE activity_id=@activity_id";
+
+        using MySqlCommand cmd = new MySqlCommand(query, Connection);
+
+        cmd.Parameters.AddWithValue("@activity_id", activity.Id);
+        cmd.Parameters.AddWithValue("@name", activity.Name);
+        cmd.Parameters.AddWithValue("@description", activity.Description);
+        cmd.Parameters.AddWithValue("@end_date_utc", activity.EndDateUTC);
+        cmd.Parameters.AddWithValue("@status", activity.Status);
 
 
         int rowsAffected = await cmd.ExecuteNonQueryAsync();
-        if (rowsAffected != 1) throw new Exception($"Unable to update task! {task.Id}");
+        if (rowsAffected != 1) throw new Exception($"Unable to update activity! {activity.Id}");
     
-        Log($"Updated task. Name:{task.Name != null}, Description:{task.Description != null}, Status:{task.Status != null}, EndTime:{task.EndDateUTC != null}", LogCodes.TaskUpdated, task.OwnerId);
+        Log($"Updated activity. Name:{activity.Name != null}, Description:{activity.Description != null}, Status:{activity.Status != null}, EndTime:{activity.EndDateUTC != null}", LogCodes.ActivityUpdated, activity.OwnerId);
     }
     public static async Task<int> CreateActivityAsync(Activity activity) {
         if (await ActivityNameInUse(activity.OwnerId, activity.Name)) throw new ActivityNameInUseException("Activity name already in use");

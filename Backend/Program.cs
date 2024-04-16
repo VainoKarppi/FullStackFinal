@@ -36,16 +36,22 @@ internal class Program {
             // Add CORS policies
             app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 
-            // Add Methods
+            //! ADD METHODS
+            // Tasks Methods
             app.MapPatch("/tasks/update/{taskId}", ApiMethods.UpdateTask);
             app.MapDelete("/tasks/delete/{taskId}", ApiMethods.DeleteTask);
             app.MapPost("/tasks/create", ApiMethods.CreateTask);
             app.MapGet("/tasks", ApiMethods.GetTasks);
             app.MapGet("/tasks/{taskId}", ApiMethods.GetTask);
 
-            app.MapPost("/activities/create", ApiMethods.CreateActivity);
+            // Activity methods
             app.MapGet("/activities", ApiMethods.GetActivities);
-
+            app.MapPost("/activities/create", ApiMethods.CreateActivity);
+            app.MapPatch("/activities/update/{activityId}", ApiMethods.UpdateActivity);
+            app.MapPatch("/activities/reset/{activityId}", ApiMethods.ResetActivity);
+            app.MapDelete("/activities/delete/{activityId}", ApiMethods.DeleteActivity);
+            
+            // User Methods
             app.MapPost("/register", ApiMethods.Register);
             app.MapPost("/login", ApiMethods.Login);
             app.MapPost("/logout", ApiMethods.Logout);
@@ -68,7 +74,7 @@ internal class Program {
             // Run server on background so we can continue by using CLI
             _ = Task.Run(() => app.Run());
 
-            Console.Beep();
+            //Console.Beep();
 
             await Task.Delay(1000);
             Console.WriteLine("STARTED API SERVER");

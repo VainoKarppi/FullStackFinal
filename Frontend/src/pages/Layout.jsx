@@ -25,7 +25,7 @@ const Layout = () => {
                 <Nav className="me-auto">
                   <Nav.Link href="/tasks">Tasks</Nav.Link>
                   <Nav.Link href="/activity">Activities</Nav.Link> 
-                  <Nav.Link href="/statistics">Statistics</Nav.Link> 
+                  {/* <Nav.Link href="/statistics">Statistics</Nav.Link> */}
                   <Nav.Link href="/account">Account</Nav.Link> 
                 </Nav>
                 <Button href="/logout">Logout</Button>

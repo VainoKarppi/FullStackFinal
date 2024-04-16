@@ -16,6 +16,7 @@ function NewActivityModal({ show, handleClose, onSave }) {
     const [selectedTasks, setSelectedTasks] = useState([]);
 
     const [errorMessage, setErrorMessage] = useState('');
+    const [searchError, setSearchErrorMessage] = useState('');
 
     // Reset the state when the modal is shown
     useEffect(() => {
@@ -25,6 +26,7 @@ function NewActivityModal({ show, handleClose, onSave }) {
           setSelectedTasks([]);
           setSearchResults([]);
           setRepeatOption('');
+          setSearchErrorMessage('');
 
           // Calculate 1 week from now
           const oneWeekLater = new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -38,12 +40,21 @@ function NewActivityModal({ show, handleClose, onSave }) {
 
     const handleSearch = async (filter) => {
       setSearchQuery(filter);
+      setSearchErrorMessage('');
 
       // Return results from server
       let results = await getTasksByFilter(filter);
+      
+      // Dont allow to readd those that are already in use by another activity!
+      results = results.filter(task => task.activityId === null);
 
       // Filter out tasks from results that are already present in selectedTasks based on task.id
       results = results.filter(result => !selectedTasks.some(task => task.id === result.id));
+
+      if (results.length === 0) {
+        setSearchErrorMessage("No tasks found that could be added!");
+        return;
+      }
 
       // Calculate relevance score for each task. Used to sort
       results.forEach(task => {
@@ -152,6 +163,7 @@ function NewActivityModal({ show, handleClose, onSave }) {
                 >
                   <FaSearch /> Search
                 </Button>
+                <span style={{fontSize:"12px", color:"red"}}> {searchError}</span>
                 <ListGroup>
                   {searchResults.map((task, index) => (
                     <ListGroup.Item key={index} action onClick={() => handleSelectTask(task)}>
@@ -164,7 +176,7 @@ function NewActivityModal({ show, handleClose, onSave }) {
               <Container style={{ marginTop: "5px", marginBottom: "8px", border: '1px solid #dee2e6', padding: '15px' }}>
                 <Form.Group>
                   <Form.Label><h6>Added Tasks:</h6></Form.Label>
-                  <hr style={{ marginTop: "0" }} /> {/* Move the hr higher */}
+                  <hr style={{ marginTop: "0" }} />
                   {selectedTasks.length === 0 ? (
                     <p style={{ fontStyle: 'italic' }}>No tasks added to list yet...</p>
                   ) : (

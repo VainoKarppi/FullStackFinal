@@ -18,6 +18,7 @@ You can check the API status by opening this web page in your browser.
 Also make sure that the tables were created successfully using a HeidiSQSL, or another SQL viewer.
 
 # How to use the API
+# WIP
 You can start by creating a POST request at: <http://localhost:5000/register>. This does not require authentication. Make sure Content-Type is set to: **application/json**
 
 In Body add the username and password to form-data.

@@ -20,7 +20,6 @@ function EditTaskModal({ show, handleClose, taskDetails, onSave }) {
     const handleSaveChanges = async (e) => {
         e.preventDefault();
 
-        const token = sessionStorage.getItem("sessionToken");
 
         try {
             // Update only the fields that were changed

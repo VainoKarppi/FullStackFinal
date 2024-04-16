@@ -47,6 +47,91 @@ public static partial class ApiMethods {
         }
     }
 
+    public static async Task DeleteActivity(HttpContext context, int activityId) {
+        try {
+            // Check authentication. Returns error code automatically, if not authenticated
+            if (!await SessionManager.Authorized(context)) return;
+
+            int userId = SessionManager.GetUserIdByGuid(SessionManager.GetTokenFromHeader(context.Request.Headers));
+
+            // Delete activity from DB
+            await Database.DeleteActivityAsync(userId, activityId);
+
+            context.Response.StatusCode = StatusCodes.Status200OK;
+            if (Program.DEBUG) Console.WriteLine($"User:{userId} removed activity:{activityId}");
+        } catch (Exception ex) {
+            // Return error to client
+            if (Program.DEBUG) Console.WriteLine(ex);
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsync(ex.Message);
+        }
+    }
+
+    public static async Task UpdateActivity(HttpContext context, int activityId) {
+        try {
+            // Check authentication. Returns error code automatically, if not authenticated
+            if (!await SessionManager.Authorized(context)) return;
+
+            int userId = SessionManager.GetUserIdByGuid(SessionManager.GetTokenFromHeader(context.Request.Headers));
+
+            Activity? activity = await context.Request.ReadFromJsonAsync<Activity>();
+            if (activity is null) {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await context.Response.WriteAsync("Unable to parse data from body");
+                return;
+            }
+
+            activity.Id = activityId;
+            activity.OwnerId = userId;
+
+            bool updateTimesCompleted = false;
+            if (activity.Status == Activity.ActivityStatus.Done) {
+                updateTimesCompleted = true;
+                activity.EndDateUTC = DateTime.UtcNow;
+            }
+
+            // Update task in DB
+            // Increment times completed
+            await Database.UpdateActivityAsync(activity, updateTimesCompleted);
+
+            context.Response.StatusCode = StatusCodes.Status200OK;
+            if (Program.DEBUG) Console.WriteLine($"User:{userId} updated activity:{activityId}");
+        } catch (Exception ex) {
+            // Return error to client
+            if (Program.DEBUG) Console.WriteLine(ex);
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsync(ex.Message);
+        }
+    }
+
+    public static async Task ResetActivity(HttpContext context, int activityId) {
+        try {
+            // Check authentication. Returns error code automatically, if not authenticated
+            if (!await SessionManager.Authorized(context)) return;
+
+            int userId = SessionManager.GetUserIdByGuid(SessionManager.GetTokenFromHeader(context.Request.Headers));
+
+            Activity activity = new() {
+                Id = activityId,
+                OwnerId = userId,
+                DueDateUTC = DateTime.UtcNow.AddDays(7),
+                StartDateUTC = DateTime.UtcNow
+            };
+            
+            // Set enddate=null, status = inProgress, Duedate = 1 week
+            // TODO add dueDate as a variable
+            await Database.ResetActivityAsync(activity);
+
+            context.Response.StatusCode = StatusCodes.Status200OK;
+            if (Program.DEBUG) Console.WriteLine($"User:{userId} updated activity:{activityId}");
+        } catch (Exception ex) {
+            // Return error to client
+            if (Program.DEBUG) Console.WriteLine(ex);
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            await context.Response.WriteAsync(ex.Message);
+        }
+    }
+
     public static async Task GetActivities(HttpContext context, string? filter) {
         try {
             if (!await SessionManager.Authorized(context)) return;
