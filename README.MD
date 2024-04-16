@@ -17,6 +17,14 @@ You can check the API status by opening this web page in your browser.
 
 Also make sure that the tables were created successfully using a HeidiSQSL, or another SQL viewer.
 
+# How to run the Frontend project:
+1. navigate to Frontend folder using ``cd ./Frontend``
+1. Run in cmd: 
+    
+    ``npm install``
+
+    ``npm run dev``
+
 # How to use the API
 # WIP
 You can start by creating a POST request at: <http://localhost:5000/register>. This does not require authentication. Make sure Content-Type is set to: **application/json**
