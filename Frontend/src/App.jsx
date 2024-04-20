@@ -16,6 +16,9 @@ import Tasks from "./pages/Tasks";
 // Activity
 import Activity from "./pages/Activity";
 
+// Statistics
+import Statistics from "./pages/Statistics";
+
 
 import NoPage from "./pages/NoPage";
 
@@ -30,6 +33,7 @@ function App() {
           <Route path="account" element={<Account />} />
           <Route path="logout" element={<Logout />} />
           <Route path="tasks" element={<Tasks />} />
+          <Route path="statistics" element={<Statistics/>} />
           
           <Route path="*" element={<NoPage />} />
         </Route>

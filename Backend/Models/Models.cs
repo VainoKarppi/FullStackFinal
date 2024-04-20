@@ -14,6 +14,14 @@ public enum LogCodes {
 }
 
 
+public class Statistic {
+    public int? OnwerId { get; set; }
+    public int? TasksCompleted { get; set; }
+    public int? TasksInProgress { get; set; }
+    public int? ActivitiesCompleted { get; set; }
+    public int? ActivitiesInProgress { get; set; }
+}
+
 public class Activity {
     public List<TodoTask> Tasks { get; set; } = [];
     public enum ActivityStatus {

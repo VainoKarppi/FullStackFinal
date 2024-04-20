@@ -17,6 +17,7 @@ const Activities = () => {
     const [loadingTasks, setTaskLoad] = useState(true);
     const [activities, setActivities] = useState([]);
     const [activityTasks, setActivityTasks] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
     const handleCloseCreateActivityModal = () => setShowCreateModal(false);
     const handleShowCreateTaskModal = () => setShowCreateModal(true);
 
@@ -47,6 +48,25 @@ const Activities = () => {
         loadActivities();
     }, []);
     
+    const searchActivity = async (query) => {
+      // If query removed, search all
+      if (query === "") {
+        const activities = await getActivities();
+        setActivities(activities);
+        return;
+      }
+
+      try {
+        setActivities([]);
+          // Filter activities based on the query
+          const foundActivities = activities.filter(activity =>
+            activity.name.toLowerCase().includes(query.toLowerCase())
+          );
+          setActivities(foundActivities);
+      } catch (error) {
+          console.error('Failed to search activity:', error);
+      }
+    };
 
     const fetchTasks = async (index) => {
       if (index === null) return; // Item closed
@@ -258,7 +278,22 @@ const Activities = () => {
                 />
             </div>
             <br></br>
-
+            <Form.Group controlId="formSearch" className="mb-3">
+              <Form.Label>Search</Form.Label>
+              <InputGroup>
+                  <Form.Control
+                      type="search"
+                      placeholder="Search for title"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      style={{ maxWidth: '200px', marginRight: '10px' }} // Limiting the width and adding margin
+                  />
+                  <Button variant="primary" onClick={() => searchActivity(searchQuery)}>
+                  <FaSearch /> Search
+                  </Button>
+              </InputGroup>
+            </Form.Group>
+            <br></br>
             <Container style={{ marginTop: "5px", minHeight:"10rem", marginBottom: "8px", border: '1px solid #dee2e6', padding: '15px' }}>
               <Accordion defaultActiveKey="-1" onSelect={(index) => fetchTasks(index)}>
                 {activities.map((activity, activityIndex) => (
