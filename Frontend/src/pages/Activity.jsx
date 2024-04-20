@@ -294,7 +294,7 @@ const Activities = () => {
               </InputGroup>
             </Form.Group>
             <br></br>
-            <Container style={{ marginTop: "5px", minHeight:"10rem", marginBottom: "8px", border: '1px solid #dee2e6', padding: '15px' }}>
+            <Container style={{ marginTop: "5px", minHeight:"10rem", marginBottom: "8px", padding: '15px' }}>
               <Accordion defaultActiveKey="-1" onSelect={(index) => fetchTasks(index)}>
                 {activities.map((activity, activityIndex) => (
                   <Accordion.Item key={activityIndex} eventKey={activityIndex.toString()}>

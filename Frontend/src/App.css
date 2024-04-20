@@ -1,0 +1,26 @@
+body {
+    /* Set background color */
+    background-color: #f3f3f3; /* Fallback color */
+    /* Create gradient */
+    background-image: linear-gradient(to bottom, #ffffff, #5e646e);
+    /* Fade to white */
+
+
+    margin: 0;
+    padding: 0;
+    min-height: 100vh; /* Set minimum height to 100% of the viewport height */
+    display: flex;
+    flex-direction: column;
+}
+
+
+.navbar {
+    background: linear-gradient(to right, #242438, #000000); /* Set gradient background */
+}
+
+
+.nav-link {
+    margin-right: 10px; /* Adjust as needed */
+    font-family: sans-serif; /* Change font */
+}
+

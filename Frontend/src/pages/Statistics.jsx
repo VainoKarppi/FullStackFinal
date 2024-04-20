@@ -6,6 +6,7 @@ import { getStatistics } from '../Services/statisticsServices';
 
 const Statistics = () => {
     const navigate = useNavigate();
+    const [statistics, setStatistics] = useState([]);
 
     var firstRun = true;
     useEffect(() => {
@@ -13,7 +14,9 @@ const Statistics = () => {
         firstRun = false;
 
         async function loadStatistics() {
-            await getStatistics();
+            const statistics = await getStatistics();
+            console.log(statistics);
+            setStatistics(statistics);
         }
         loadStatistics();
     }, []);
@@ -22,9 +25,11 @@ const Statistics = () => {
         <ProtectedLayout>
             <Container style={{ marginTop: "50px", marginBottom: "50px" }}>
                 <h1>Statistics</h1>
-                <p>Total tasks completed: </p>
-                <p>Total tasks created: </p>
-                <p>Tasks in Progress: </p>
+                <p>Tasks completed: {statistics.tasksCompleted}</p>
+                <p>Tasks in Progress: {statistics.tasksCompleted}</p>
+
+                <p>Activities completed: {statistics.activitiesCompleted}</p>
+                <p>Activities in Progress: {statistics.activitiesInProgress}</p>
             </Container>
 
         </ProtectedLayout>

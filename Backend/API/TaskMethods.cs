@@ -117,9 +117,15 @@ public static partial class ApiMethods {
             task.Id = taskId;
             task.OwnerId = userId;
 
+            bool updateTimesCompleted = false;
+            if (task.Status == TodoTask.TaskStatus.Done) {
+                updateTimesCompleted = true;
+                task.EndDateUTC = DateTime.UtcNow;
+            }
+
 
             // Update task in DB
-            await Database.UpdateTaskAsync(task);
+            await Database.UpdateTaskAsync(task, updateTimesCompleted);
 
             context.Response.StatusCode = StatusCodes.Status200OK;
             if (Program.DEBUG) Console.WriteLine($"User:{userId} updated task:{taskId}");

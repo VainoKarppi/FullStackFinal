@@ -7,11 +7,12 @@ export const getStatistics = async () => {
 
     const token = sessionStorage.getItem("sessionToken");
 
-    const response = await axiosInstance.get(`/statistics`, null, {
+    const response = await axiosInstance.get(`/statistics`, {
         headers: {
             'Authorization': `Bearer ${token}`
         }
     });
 
+    console.log(response.data);
     return (response.data);
 };

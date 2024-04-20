@@ -55,6 +55,7 @@ const Home = () => {
                         placeholder="Enter username"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
+                        style={{ minWidth: '20%', maxWidth: '300px' }}
                         />
                     </Form.Group>
                     <Form.Group controlId="formPassword">
@@ -64,6 +65,7 @@ const Home = () => {
                         placeholder="Enter password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        style={{ minWidth: '20%', maxWidth: '300px' }}
                         />
                     </Form.Group>
                     <br></br>

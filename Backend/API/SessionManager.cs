@@ -88,7 +88,14 @@ public static class SessionManager {
 
             return true;
         } catch (Exception ex) {
+            if (Program.DEBUG) Console.WriteLine(ex);
+            
             // Write response Exceptions
+            if (ex is ArgumentOutOfRangeException) {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await context.Response.WriteAsync("Invalid request");
+                return false;
+            }
             if (ex is InvalidUserIdException) {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await context.Response.WriteAsync("Invalid userId");

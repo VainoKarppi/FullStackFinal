@@ -25,19 +25,24 @@ import NoPage from "./pages/NoPage";
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="register" element={<Register />} />
-          <Route path="activity" element={<Activity />} />
-          <Route path="account" element={<Account />} />
-          <Route path="logout" element={<Logout />} />
-          <Route path="tasks" element={<Tasks />} />
-          <Route path="statistics" element={<Statistics/>} />
-          
-          <Route path="*" element={<NoPage />} />
-        </Route>
-      </Routes>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="register" element={<Register />} />
+            <Route path="activity" element={<Activity />} />
+            <Route path="account" element={<Account />} />
+            <Route path="logout" element={<Logout />} />
+            <Route path="tasks" element={<Tasks />} />
+            <Route path="statistics" element={<Statistics/>} />
+            
+            <Route path="*" element={<NoPage />} />
+            
+          </Route>
+        </Routes>
+        <br></br>
+        <br></br>
+      </div>
     </Router>
   );
 }

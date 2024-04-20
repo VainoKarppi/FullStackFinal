@@ -57,6 +57,9 @@ internal class Program {
             app.MapPost("/logout", ApiMethods.Logout);
             app.MapPatch("/user/update", ApiMethods.UpdateUser);
             app.MapDelete("/user/delete", ApiMethods.DeleteUser);
+
+            app.MapGet("/statistics", ApiMethods.GetStatistics);
+
             app.MapGet("/", ApiMethods.Home);
 
             // Endpoint to access protected resource using session token
